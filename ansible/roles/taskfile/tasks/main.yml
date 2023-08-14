@@ -1,0 +1,38 @@
+---
+
+- name: "Create temporal directory"
+  tempfile:
+    state: directory
+    prefix: "taskfile-"
+  register: temp_dir
+
+- name: "Get latest version number of taskfile"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/go-task/task/releases/latest
+    return_content: yes
+  register: taskfile_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ taskfile_json.content | from_json }}"
+
+- name: "Download latest version of taskfile"
+  ansible.builtin.unarchive:
+    src: "{{ taskfile_pkg_url }}"
+    dest: "{{ temp_dir.path }}"
+    remote_src: yes
+
+- name: "Install taskfile"
+  ansible.builtin.copy:
+    src: "{{ temp_dir.path }}/task"
+    dest: "{{ taskfile_default_path }}/task"
+    owner: "root"
+    group: "root"
+    mode: "a+x"
+    remote_src: yes
+
+- name: "Cleaning up temporal assets"
+  file:
+    path: "{{ temp_dir.path }}"
+    state: absent
+  when: temp_dir.path is defined
