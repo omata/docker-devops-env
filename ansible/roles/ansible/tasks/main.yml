@@ -67,9 +67,8 @@
 - name: "Install Ansible."
   ansible.builtin.apt:
     name:
-      - ansible
-      - ansible-core
-    state: latest
+      - "ansible"
+    state: "latest"
     update_cache: true
   register: ansible_installation
 
