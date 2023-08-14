@@ -1,0 +1,40 @@
+---
+
+- name: "Create temporal directory"
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "joe-"
+  register: temp_dir
+
+- name: "Get latest version number of joe"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/omata/joe/releases/latest
+    return_content: yes
+  register: joe_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ joe_json.content | from_json }}"
+
+- name: "Download latest version of joe"
+  ansible.builtin.unarchive:
+    src: "{{ joe_pkg_url }}"
+    dest: "{{ temp_dir.path }}"
+    remote_src: yes
+  when: temp_dir.path is defined
+
+- name: "Install joe"
+  ansible.builtin.file:
+    src: "{{ temp_dir.path }}/build/linux-{{ base_arch[ansible_architecture] }}/joe"
+    dest: "{{ joe_default_path }}"
+    state: "hard"
+    owner: "root"
+    group: "root"
+    mode: "a+x"
+  when: temp_dir.path is defined
+
+- name: "Cleaning up temporal assets"
+  ansible.builtin.file:
+    path: "{{ temp_dir.path }}"
+    state: "absent"
+  when: temp_dir.path is defined

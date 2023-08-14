@@ -1,0 +1,10 @@
+---
+# vars file for ansible-role-s5cmd
+base_arch:
+  x86_64: 'amd64'
+  amd64: 'amd64'
+  aarch64: 'arm64'
+
+# vars for terraform in Linux system
+joe_pkg_url: "https://github.com/omata/joe/releases/download/{{ release.tag_name }}/linux-{{ base_arch[ansible_architecture] }}.tar.zst"
+joe_default_path: /usr/local/bin/
