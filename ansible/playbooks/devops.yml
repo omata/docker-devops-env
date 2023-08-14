@@ -1,0 +1,21 @@
+---
+- hosts: "all"
+  become: true
+  gather_facts: true
+
+  roles:
+    - "required-packages"
+    - "ansible"
+    - "awscli2"
+    - "croc"
+    - "google-cloud-sdk"
+    - "joe"
+    - "s5cmd"
+    - "packer"
+    - "pulumi"
+    - "taskfile"
+    - "terraform"
+    - "user-config"
+    - "python-modules"
+    - "starship"
+    - "clean-up"
