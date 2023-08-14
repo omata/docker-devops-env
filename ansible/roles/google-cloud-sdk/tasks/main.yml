@@ -1,0 +1,72 @@
+---
+# file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
+
+- block:
+  - name: "Create temporal directory"
+    ansible.builtin.tempfile:
+      state: directory
+      prefix: "gcp-"
+    register: temp_dir
+
+  - name: "Get Google Cloud SDK ppa key"
+    ansible.builtin.get_url:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      dest: "{{ temp_dir.path }}/google-cloud-sdk.asc"
+    when: temp_dir.path is defined
+
+  - name: "Ensure key was downloaded"
+    ansible.builtin.stat:
+      path: "{{ temp_dir.path }}/google-cloud-sdk.asc"
+    register: repository_key
+    when: temp_dir.path is defined
+
+  - name: "Convert key to the binary GPG format"
+    ansible.builtin.command: "gpg --dearmor {{ temp_dir.path }}/google-cloud-sdk.asc"
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Ensure there is not a previous keychain file for Google Cloud SDK ppa"
+    ansible.builtin.stat:
+      path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+    register: old_keychain
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Delete previous keychain file"
+    ansible.builtin.file:
+      path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+      state: absent
+    when: temp_dir.path is defined and repository_key.stat.exists and old_keychain.stat.exists
+
+  - name: "Install ppa repository keychain file"
+    ansible.builtin.file:
+      src: "{{ temp_dir.path }}/google-cloud-sdk.asc.gpg"
+      dest: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+      state: "hard"
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Get system architecture"
+    ansible.builtin.command: dpkg --print-architecture
+    register: sys_arch
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Configure Google Cloud SDK repository"
+    ansible.builtin.apt_repository:
+      repo: "deb [arch={{ sys_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg] https://packages.cloud.google.com/apt cloud-sdk main"
+      state: present
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Cleaning up temporary assets"
+    ansible.builtin.file:
+      path: "{{ temp_dir.path }}"
+      state: "absent"
+    when: temp_dir.path is defined
+  when: from_ubuntu_repo is false
+
+- name: "Install Google Cloud SDK."
+  ansible.builtin.apt:
+    name:
+      - "google-cloud-sdk"
+    state: latest
+    update_cache: true
