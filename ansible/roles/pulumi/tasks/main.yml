@@ -1,0 +1,39 @@
+---
+
+- name: "Create temporal directory"
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "joe-"
+  register: temp_dir
+
+- name: "Get latest version number of pulumi"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/pulumi/pulumi/releases/latest
+    return_content: yes
+  register: pulumi_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ pulumi_json.content | from_json }}"
+
+- name: "Download latest version of pulumi"
+  ansible.builtin.unarchive:
+    src: "{{ pulumi_pkg_url }}"
+    dest: "{{ temp_dir.path }}"
+    remote_src: yes
+
+- name: "Install pulumi"
+  ansible.builtin.copy:
+    src: "{{ temp_dir.path }}/pulumi/"
+    dest: "{{ pulumi_default_path }}"
+    owner: "root"
+    group: "root"
+    mode: "a+x"
+    remote_src: true
+  when: temp_dir.path is defined
+
+- name: "Cleaning up temporal assets"
+  ansible.builtin.file:
+    path: "{{ temp_dir.path }}"
+    state: "absent"
+  when: temp_dir.path is defined
