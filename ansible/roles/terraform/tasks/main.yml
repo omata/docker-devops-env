@@ -1,0 +1,25 @@
+---
+# tasks file for install terraform on Linux and Unix system
+
+- name: "Find all versions of Terraform"
+  uri:
+    url: https://releases.hashicorp.com/terraform/index.json
+    return_content: yes
+  register: terraform_index
+  when: terraform_version == "latest"
+
+- name: "Finds the latest Terraform version when latest var is define"
+  set_fact:
+    terraform_version_to_install: "{{ (terraform_index.content | from_json).versions | reject('search','-') | list | sort_versions | last }}"
+  when: terraform_version == 'latest'
+
+- name: "Use the specified Terraform version when latest var is not define"
+  set_fact:
+    terraform_version_to_install: "{{ terraform_version }}"
+  when: terraform_version != 'latest'
+
+- name: "Install Terraform"
+  unarchive:
+    src: "{{ terraform_pkg_url }}"
+    dest: "{{ terraform_path }}"
+    remote_src: yes
