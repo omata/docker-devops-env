@@ -1,0 +1,48 @@
+---
+
+- name: "Create user group"
+  ansible.builtin.group:
+    name: "{{ build_group }}"
+    state: present
+    gid: "{{ build_group_id }}"
+
+- name: "Create user"
+  ansible.builtin.user:
+    create_home: true
+    name: "{{ build_user }}"
+    groups: "{{ build_group }}"
+    shell: "/bin/bash"
+    uid: "{{ build_user_id }}"
+    append: true
+
+- name: "Install .bashrc file"
+  ansible.builtin.copy:
+    src: ".bashrc"
+    dest: "/home/{{ build_user }}/.bashrc"
+    owner: "{{ build_user }}"
+    group: "{{ build_group }}"
+    mode: 0644
+
+- name: "Configure user as sudoer"
+  ansible.builtin.template:
+    src: "sudoer.j2"
+    dest: "/etc/sudoers.d/{{ build_user }}"
+
+- name: "Modify locale configuration to set the choosen option"
+  ansible.builtin.lineinfile:
+    path: "/etc/locale.gen"
+    regex: "^# {{ locale_config }} UTF-8"
+    line: "{{ locale_config }} UTF-8"
+
+- name: "Reconfigure locale"
+  ansible.builtin.command: dpkg-reconfigure --frontend=noninteractive locales
+
+- name: "Update locale configuration"
+  ansible.builtin.command: update-locale LANG=$LANG
+  environment:
+    LANG: "{{ locale_config }}"
+
+- name: "Set locale wide system environment variables"
+  ansible.builtin.template:
+    src: "locale.j2"
+    dest: "/etc/profile.d/100-set-locales.sh"
