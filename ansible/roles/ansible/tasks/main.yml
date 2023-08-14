@@ -1,0 +1,90 @@
+---
+# file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
+
+- block:
+  - name: "Create temporal directory"
+    ansible.builtin.tempfile:
+      state: directory
+      prefix: "ansible-"
+    register: temp_dir
+
+  - name: "Get ansible ppa key"
+    ansible.builtin.get_url:
+      url: https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6125e2a8c77f2818fb7bd15b93c4a3fd7bb9c367
+      dest: "{{ temp_dir.path }}/ansible.asc"
+    when: temp_dir.path is defined
+
+  - name: "Ensure key was downloaded"
+    ansible.builtin.stat:
+      path: "{{ temp_dir.path }}/ansible.asc"
+    register: repository_key
+    when: temp_dir.path is defined
+
+  - name: "Convert key to the binary GPG format"
+    ansible.builtin.command: "gpg --dearmor {{ temp_dir.path }}/ansible.asc"
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Ensure there is not a previous keychain file for ansible ppa"
+    ansible.builtin.stat:
+      path: "/etc/apt/trusted.gpg.d/ansible.gpg"
+    register: old_keychain
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Delete previous keychain file"
+    ansible.builtin.file:
+      path: "/etc/apt/trusted.gpg.d/ansible.gpg"
+      state: absent
+    when: temp_dir.path is defined and repository_key.stat.exists and old_keychain.stat.exists
+
+  - name: "Install ppa repository keychain file"
+    ansible.builtin.file:
+      src: "{{ temp_dir.path }}/ansible.asc.gpg"
+      dest: "/etc/apt/trusted.gpg.d/ansible.gpg"
+      state: "hard"
+      owner: "root"
+      group: "root"
+      mode: 0644
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Get system architecture"
+    ansible.builtin.command: dpkg --print-architecture
+    register: sys_arch
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Configure ansible repository"
+    ansible.builtin.apt_repository:
+      repo: "deb [arch={{ sys_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/ansible.gpg] https://ppa.launchpadcontent.net/ansible/ansible-{{ version_to_install }}/ubuntu {{ ansible_distribution_release }} main"
+      state: present
+    when: temp_dir.path is defined and repository_key.stat.exists
+
+  - name: "Cleaning up temporal assets"
+    ansible.builtin.file:
+      path: "{{ temp_dir.path }}"
+      state: "absent"
+    when: temp_dir.path is defined
+  when: from_ubuntu_repo is false
+
+- name: "Install Ansible."
+  ansible.builtin.apt:
+    name:
+      - ansible
+      - ansible-core
+    state: latest
+    update_cache: true
+  register: ansible_installation
+
+- block:
+  - name: "Create ansible configuration file"
+    ansible.builtin.shell:
+      cmd: ansible-config init --disabled -t all > /etc/ansible/ansible.cfg
+    register: create_ansible_config_file
+    when: ansible_installation.failed is false
+
+  - name: "Configure ansible-galaxy cache"
+    ansible.builtin.lineinfile:
+      path: "/etc/ansible/ansible.cfg"
+      insertafter: "^;cache_dir=~/.ansible/galaxy_cache"
+      line: "cache_dir=/usr/share/ansible/collections/.ansible/galaxy_cache"
+      state: present
+    when: ansible_installation.failed is false and create_ansible_config_file.failed is false
+  when: from_ubuntu_repo is false

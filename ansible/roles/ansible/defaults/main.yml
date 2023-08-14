@@ -1,0 +1,7 @@
+---
+
+# Set it to true if you want to install ansible from ubuntu repositories.
+from_ubuntu_repo: false
+
+# Ansible version to install.
+version_to_install: "7"
