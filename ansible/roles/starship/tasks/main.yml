@@ -1,0 +1,41 @@
+---
+
+- name: "Get latest version number of starship"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/starship/starship/releases/latest
+    return_content: yes
+  register: starship_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ starship_json.content | from_json }}"
+
+- name: "Download latest version of starship"
+  ansible.builtin.unarchive:
+    src: "{{ starship_pkg_url }}"
+    dest: "{{ starship_default_path }}"
+    remote_src: yes
+
+- name: "Ensure starship configuration directory exists"
+  ansible.builtin.file:
+    path: "/etc/starship"
+    state: "directory"
+    mode: 0755
+
+- name: "Install starship config file"
+  ansible.builtin.copy:
+    src: "starship.toml"
+    dest: "/etc/starship/"
+    owner: "root"
+    group: "root"
+    mode: 0664
+
+- name: "Install general profiles"
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/profile.d/{{ item }}"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  loop:
+    - custom_envs.sh

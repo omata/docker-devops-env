@@ -1,0 +1,76 @@
+# Usar formato personalizado
+format = """
+[┌───────────────────>](bold green)
+[│](bold green)$username$hostname$env_var$shlvl$directory$git_branch$git_commit$git_state$git_status$nodejs$perl$php$python$ruby$rust$terraform$aws$gcloud$custom$cmd_duration$line_break$time$status$character"""
+
+# Espera 10 milisegundos para que starship revise los archivos del directorio actual.
+scan_timeout = 10
+
+# Desactiva la nueva línea al inicio del prompt
+add_newline = false
+
+# Reemplaza el símbolo "❯" por "➜" del prompt
+[character]
+#success_symbol = "[➜](bold green) "
+#error_symbol = "[➜](bold red) "
+success_symbol = "[└─> ](bold green) "
+error_symbol = "[└─> ](bold red) "
+
+
+# Desactiva el gestor de paquetes, ocultándolo por completo del prompt
+[package]
+disabled = true
+
+[aws]
+symbol = " "
+style = "bold blue"
+format = 'en [$symbol$profile(\($region\))]($style) '
+
+[directory]
+read_only = " "
+
+[docker_context]
+symbol = " "
+
+[env_var]
+style = "bold blue"
+variable = "APP_ENV"
+default = ""
+format = "[$env_value]($style) "
+
+[gcloud]
+symbol = "️ "
+
+[git_branch]
+symbol = " "
+always_show_remote = false
+truncation_symbol = "…"
+format = "en [$symbol$branch]($style) "
+
+[hg_branch]
+symbol = " "
+
+[memory_usage]
+symbol = " "
+
+[nix_shell]
+symbol = " "
+
+[nodejs]
+symbol = " "
+
+[perl]
+symbol = " "
+
+[php]
+symbol = " "
+
+[python]
+symbol = " "
+pyenv_version_name = true
+
+[ruby]
+symbol = " "
+
+[rust]
+symbol = " "
