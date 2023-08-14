@@ -127,7 +127,7 @@ done
 USERDIRS=".ssh src tmp"
 for USRDIR in ${USERDIRS} ; do
     if [[ -d ${HOME}/${USRDIR} ]] && [[ "$(stat -c %U ${HOME}/${USRDIR})" != "${USER}" ]] ; then
-        sudo chown -R ${USER}:${USER} ${HOME}/${USRDIR}
+        sudo chown -R ${USER}:${USER} ${HOME}/${USRDIR} 2>&1 > /dev/null
     fi
 done
 
