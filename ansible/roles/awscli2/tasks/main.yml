@@ -1,0 +1,41 @@
+---
+
+- name: "Create temporal directory"
+  tempfile:
+    state: directory
+    prefix: "sec_report-"
+  register: temp_dir
+
+- name: "Uninstall any version of 'awscli' installed by apt-get"
+  apt:
+    pkg:
+      - "awscli"
+    state: "absent"
+    purge: yes
+    autoremove: yes
+
+- name: "Download awscli-v2 installer"
+  unarchive:
+    src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
+    dest: "{{ temp_dir.path }}"
+    remote_src: yes
+    creates: "{{ temp_dir.path }}/aws"
+    mode: 0755
+
+- name: "Install awscli-v2"
+  command:
+  args:
+    cmd: "{{ temp_dir.path }}/aws/install"
+    creates: "/usr/local/bin/aws"
+  become: yes
+  register: aws_install
+
+- name: "Show installer output"
+  debug:
+    var: aws_install
+    verbosity: 2
+
+- name: "Cleaning up..."
+  file:
+    path: "{{ temp_dir.path }}"
+    state: "absent"
