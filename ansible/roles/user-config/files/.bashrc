@@ -116,7 +116,7 @@ if [ -d $HOME/.local ] ; then
 fi
 
 # load existing cryptographic keys on ssh keyring.
-for KEYFILE in $(find ${HOME}/.ssh -type f) ; do
+for KEYFILE in $(find ${HOME}/.ssh -type f -name '*ami*') ; do
     head -n 1 "${KEYFILE}" | egrep -q 'BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY'
     if [ $? -eq 0 ] ; then
         ssh-add "${KEYFILE}" 2>/dev/null
