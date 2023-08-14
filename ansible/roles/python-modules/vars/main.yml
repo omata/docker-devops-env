@@ -1,0 +1,5 @@
+---
+
+# Python module list
+pypy_modules:
+  - "poetry"
