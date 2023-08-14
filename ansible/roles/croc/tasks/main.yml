@@ -1,0 +1,38 @@
+---
+
+- name: "Create temporal directory"
+  tempfile:
+    state: directory
+    prefix: "croc-"
+  register: temp_dir
+
+- name: "Get latest version number of croc"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/schollz/croc/releases/latest
+    return_content: yes
+  register: croc_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ croc_json.content | from_json }}"
+
+- name: "Download croc"
+  ansible.builtin.unarchive:
+    src: "{{ croc_pkg_url }}"
+    dest: "{{ temp_dir.path }}"
+    remote_src: yes
+
+- name: "Install croc"
+  ansible.builtin.copy:
+    src: "{{ temp_dir.path }}/croc"
+    dest: "{{ croc_default_path }}/croc"
+    owner: "root"
+    group: "root"
+    mode: "a+x"
+    remote_src: yes
+
+- name: "Cleaning up temporal assets"
+  file:
+    path: "{{ temp_dir.path }}"
+    state: absent
+  when: temp_dir.path is defined
