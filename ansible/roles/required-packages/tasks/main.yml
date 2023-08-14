@@ -1,0 +1,40 @@
+---
+
+- name: "Update current packages to the last version"
+  ansible.builtin.apt:
+    upgrade: dist
+
+- name: "Install required packages"
+  ansible.builtin.apt:
+    name:
+    - "bash-builtins"
+    - "bash-completion"
+    - "bind9-dnsutils"
+    - "curl"
+    - "dos2unix"
+    - "findutils"
+    - "file"
+    - "git"
+    - "git-flow"
+    - "gnupg"
+    - "goaccess"
+    - "groff"
+    - "httpie"
+    - "jq"
+    - "lnav"
+    - "locales"
+    - "magic-wormhole"
+    - "man"
+    - "man-db"
+    - "openssh-client"
+    - "rsync"
+    - "software-properties-common"
+    - "sudo"
+    - "tmux"
+    - "tree"
+    - "tzdata"
+    - "unzip"
+    - "vim"
+    - "wget"
+    - "zstd"
+    state: latest
