@@ -1,0 +1,30 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  PACKER_FILE: packer/devops.pkr.hcl
+  USERNAME: $USER
+  USER_ID:
+    sh: id -u
+  GROUP_ID:
+    sh: if [ $(uname -s) == "Darwin" ] ; then echo "1000" ; else id -g ; fi
+
+silent: true
+
+tasks:
+  build:
+    desc: Build the docker image.
+    cmds:
+      - task: init
+      - packer build -var "username={{.USERNAME}}" -var "uid={{.USER_ID}}" -var "gid={{.GROUP_ID}}" {{.PACKER_FILE}}
+
+  build:debug:
+    desc: Build the docker image but put packer in debug mode.
+    cmds:
+      - task: init
+      - packer build -on-error=ask {{.PACKER_FILE}}
+
+  init:
+    cmds:
+      - packer init {{.PACKER_FILE}}
