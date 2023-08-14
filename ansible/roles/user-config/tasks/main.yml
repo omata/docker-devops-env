@@ -20,7 +20,7 @@
     src: ".bashrc"
     dest: "/home/{{ build_user }}/.bashrc"
     owner: "{{ build_user }}"
-    group: "{{ build_group }}"
+    group: "{{ build_user }}"
     mode: 0644
 
 - name: "Configure user as sudoer"
