@@ -68,6 +68,13 @@ build {
     ]
   }
 
+  provisioner "shell" {
+    inline = [
+      "sudo find /home/ -type d -name '.ansible' -exec rm -rf '{}' +",
+      "rm -rf '/~${var.username}'"
+    ]
+  }
+
   post-processors {
     post-processor "docker-tag" {
       repository = var.docker_image
