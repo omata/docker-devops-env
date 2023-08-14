@@ -1,0 +1,17 @@
+---
+
+- name: "Get latest version number of s5cmd"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/peak/s5cmd/releases/latest
+    return_content: yes
+  register: s5cmd_json
+
+- name: "Set content as json"
+  set_fact:
+    release: "{{ s5cmd_json.content | from_json }}"
+
+- name: "Download latest version of s5cmd"
+  ansible.builtin.unarchive:
+    src: "{{ s5cmd_pkg_url }}"
+    dest: "{{ s5cmd_default_path }}"
+    remote_src: yes
