@@ -40,6 +40,7 @@ source "docker" "ubuntu" {
   image  = "ubuntu:22.04"
   commit = true
     changes = [
+      "LABEL maintainer='Oscar A. Mata T. <oscar.mata[at]gmail.com>'",
       "WORKDIR /home/${var.username}",
       "USER ${var.username}",
       "ENTRYPOINT [\"ssh-agent\", \"/bin/bash\", \"-l\"]"
