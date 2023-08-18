@@ -8,6 +8,7 @@ Para poder construir esta imagen, es necesario tener instalado los siguiente en 
 2. python =~ 3.10.12
 3. pipenv =~ 2023.6.18
 4. taskfile =~ 3.28.0
+5. docker =~ 24.0.5
 
 ## Instalación de requerimientos
 
