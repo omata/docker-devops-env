@@ -43,7 +43,7 @@ source "docker" "ubuntu" {
       "LABEL maintainer='Oscar A. Mata T. <oscar.mata[at]gmail.com>'",
       "WORKDIR /home/${var.username}",
       "USER ${var.username}",
-      "ENTRYPOINT [\"ssh-agent\", \"/bin/bash\", \"-l\"]"
+      "ENTRYPOINT [\"/opt/docker-entrypoint.sh\"]"
     ]
 }
 

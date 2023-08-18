@@ -1,0 +1,9 @@
+---
+
+- name: "Install Docker entry point script"
+  ansible.builtin.copy:
+    src: "docker-entrypoint.sh"
+    dest: "/opt/docker-entrypoint.sh"
+    owner: "root"
+    group: "root"
+    mode: "a+x"

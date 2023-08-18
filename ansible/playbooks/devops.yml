@@ -4,6 +4,7 @@
   gather_facts: true
 
   roles:
+    - "image-config"
     - "required-packages"
     - "ansible"
     - "awscli2"
