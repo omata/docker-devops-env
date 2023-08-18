@@ -1,0 +1,34 @@
+# Configuration file for ssh service.
+#
+
+###
+## Third party services configuration
+###
+
+# Shared parameters
+Host *
+    LogLevel INFO
+    Compression yes
+    ForwardAgent yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    ControlMaster auto
+    ControlPath none
+    ControlPersist 30m
+
+# Enterprise gitlab
+Host gitlab.mycompany.com
+    Preferredauthentications publickey
+    IdentityFile ~/<path/to/the/key.pem>
+
+#
+## <PROJECT NAME ENVIRONMENRT>
+#
+
+host <project-env>
+    HostName <host ip address>
+    User ubuntu
+    IdentityFile <~/path/to/the/key.pem>
+    IdentitiesOnly yes
+    AddKeysToAgent yes
+    ProxyCommand none

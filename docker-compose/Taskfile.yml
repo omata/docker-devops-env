@@ -1,0 +1,40 @@
+# https://taskfile.dev
+
+version: '3'
+
+silent: true
+
+vars:
+  PROJECT: <project name>
+  CONTAINER: devops  # Contenedor predeterminado para el proyecto
+
+tasks:
+  up:
+    desc: Crea el proyecto de Docker compose.
+    cmds:
+      - docker compose -p {{.PROJECT}} up -d
+
+  down:
+    desc: Destruye el entorno de Docker compose.
+    cmds:
+      - docker compose -p {{.PROJECT}} down
+
+  restart:
+    desc: Reinicia todos los contenedores del proyecto de Docker compose.
+    cmds:
+      - docker compose -p {{.PROJECT}} restart
+
+  restart:cont:
+    desc: Reinicia el contenedor especificado en la variable CONTAINER.
+    cmds:
+      - docker compose -p {{.PROJECT}} restart {{.CONTAINER}}
+
+  sh:
+    desc: Abre un shell en el contenedor predeterminado o al especificado utilizando la variable CONTAINER.
+    cmds:
+      - docker compose -p {{.PROJECT}} exec {{.CONTAINER}} bash -l && exit 0
+
+  prune:
+    desc: Destruye el entorno de Docker compose incluyendo los volúmenes asociados a los contenedores, si hubiere alguno.
+    cmds:
+      - docker compose -p {{.PROJECT}} down --volumes
