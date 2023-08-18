@@ -86,4 +86,10 @@
         line: "cache_dir=/usr/share/ansible/collections/.ansible/galaxy_cache"
         state: "present"
       when: ansible_installation.failed is false and create_ansible_config_file.failed is false
+
+    - name: "Install AWS collection for ansible"
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install amazon.aws:5.5.0 -p /usr/share/ansible/collections
+      register: install_ansible_collection
+      when: ansible_installation.failed is false
   when: from_ubuntu_repo is false
