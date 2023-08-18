@@ -20,7 +20,7 @@ tasks:
       - packer build -var "username={{.USERNAME}}" -var "uid={{.USER_ID}}" -var "gid={{.GROUP_ID}}" {{.PACKER_FILE}}
 
   build:debug:
-    desc: Build the docker image but put packer in debug mode.
+    desc: Build the docker image but set packer in debug mode.
     cmds:
       - task: init
       - packer build -on-error=ask {{.PACKER_FILE}}
