@@ -1,6 +1,6 @@
 version: '3.7'
 services:
-  devops-tools:
+  devops:
     image: devops
     restart: unless-stopped
     stdin_open: true
