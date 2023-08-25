@@ -3,8 +3,9 @@
 - name: "Create user group"
   ansible.builtin.group:
     name: "{{ build_group }}"
-    state: present
+    state: "present"
     gid: "{{ build_group_id }}"
+  when: build_group_id != "1000"
 
 - name: "Create user"
   ansible.builtin.user:
@@ -14,6 +15,15 @@
     shell: "/bin/bash"
     uid: "{{ build_user_id }}"
     append: true
+  when: build_group_id != "1000"
+
+- name: "Create user"
+  ansible.builtin.user:
+    create_home: true
+    name: "{{ build_user }}"
+    shell: "/bin/bash"
+    uid: "{{ build_user_id }}"
+  when: build_group_id == "1000"
 
 - name: "Install .bashrc file"
   ansible.builtin.copy:
