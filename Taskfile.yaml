@@ -8,7 +8,7 @@ vars:
   USER_ID:
     sh: id -u
   GROUP_ID:
-    sh: if [ $(uname -s) == "Darwin" ] ; then echo "1000" ; else id -g ; fi
+    sh: if [ $(uname -s) == "Darwin" ] ; then echo "1000" ; else echo "$(id -g)" ; fi
 
 silent: true
 
