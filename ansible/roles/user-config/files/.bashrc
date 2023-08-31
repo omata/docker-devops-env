@@ -115,7 +115,7 @@ if [ -d $HOME/.local ] ; then
     export PATH=$PATH;$HOME/.local/bin
 fi
 
-# load existing cryptographic keys on ssh keyring.
+# Load existing cryptographic keys on ssh keyring.
 for KEYFILE in $(find ${HOME}/.ssh -type f -name '*ami*') ; do
     head -n 1 "${KEYFILE}" | egrep -q 'BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY'
     if [ $? -eq 0 ] ; then
@@ -123,7 +123,7 @@ for KEYFILE in $(find ${HOME}/.ssh -type f -name '*ami*') ; do
     fi
 done
 
-# set correct permissions for user and project directories
+# Set correct permissions for user and project directories
 USERDIRS=".ssh src tmp"
 for USRDIR in ${USERDIRS} ; do
     if [[ -d ${HOME}/${USRDIR} ]] && [[ "$(stat -c %U ${HOME}/${USRDIR})" != "${USER}" ]] ; then
