@@ -1,5 +1,5 @@
 ---
-# defaults file for ansible-role-packer
+# defaults file for packer
 
 # Define packer version to install
 # Possible values: https://releases.hashicorp.com/packer/index.json

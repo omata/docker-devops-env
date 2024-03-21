@@ -1,5 +1,5 @@
 ---
-# vars file for ansible-role-s5cmd
+# vars file for taskfile
 base_arch:
   i386: '386'
   x86_64: 'amd64'
@@ -8,6 +8,6 @@ base_arch:
   armv7l: 'arm'
   armv6l: 'arm'
 
-# vars for terraform in Linux system
+# vars for taskfile
 taskfile_pkg_url: "https://github.com/go-task/task/releases/download/{{ release.tag_name }}/task_linux_{{ base_arch[ansible_architecture] }}.tar.gz"
 taskfile_default_path: /usr/local/bin/
