@@ -1,10 +1,10 @@
 ---
-# vars file for ansible-role-s5cmd
+# vars file for s5cmd
 base_arch:
   x86_64: '64bit'
   amd64: '64bit'
   aarch64: 'arm64'
 
-# vars for terraform in Linux system
+# vars for s5cmd
 s5cmd_pkg_url: "https://github.com/peak/s5cmd/releases/download/{{ release.tag_name }}/s5cmd_{{ release.tag_name[1:] }}_Linux-{{ base_arch[ansible_architecture] }}.tar.gz"
 s5cmd_default_path: /usr/local/bin/

@@ -1,0 +1,8 @@
+# vars file for ansible
+base_arch:
+  x86_64: 'amd64'
+  amd64: 'amd64'
+  aarch64: 'arm64'
+
+# vars for ansible
+ansible_ppa_url: "deb [arch={{ base_arch[ansible_architecture] }} signed-by=/etc/apt/trusted.gpg.d/ansible.gpg] https://ppa.launchpadcontent.net/ansible/ansible-{{ version_to_install }}/ubuntu {{ ansible_distribution_release }} main"

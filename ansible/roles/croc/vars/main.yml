@@ -1,5 +1,5 @@
 ---
-# vars file for ansible-role-s5cmd
+# vars file for croc
 base_arch:
   i386: '32bit'
   x86_64: '64bit'
@@ -7,6 +7,6 @@ base_arch:
   aarch64: 'ARM64'
   armv7l: 'ARM'
 
-# vars for terraform in Linux system
-croc_pkg_url: "https://github.com/schollz/croc/releases/download/{{ release.tag_name }}/croc_{{ release.tag_name[1:] }}_Linux-{{ base_arch[ansible_architecture] }}.tar.gz"
+# vars for croc
+croc_pkg_url: "https://github.com/schollz/croc/releases/download/{{ release.tag_name }}/croc_{{ release.tag_name }}_Linux-{{ base_arch[ansible_architecture] }}.tar.gz"
 croc_default_path: /usr/local/bin/

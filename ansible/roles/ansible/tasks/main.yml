@@ -46,14 +46,9 @@
         mode: 0644
       when: temp_dir.path is defined and repository_key.stat.exists
 
-    - name: "Get system architecture"
-      ansible.builtin.command: dpkg --print-architecture
-      register: sys_arch
-      when: temp_dir.path is defined and repository_key.stat.exists
-
     - name: "Configure ansible repository"
       ansible.builtin.apt_repository:
-        repo: "deb [arch={{ sys_arch.stdout }} signed-by=/etc/apt/trusted.gpg.d/ansible.gpg] https://ppa.launchpadcontent.net/ansible/ansible/ubuntu {{ ansible_distribution_release }} main"
+        repo: "{{ ansible_ppa_url }}"
         state: "present"
       when: temp_dir.path is defined and repository_key.stat.exists
 

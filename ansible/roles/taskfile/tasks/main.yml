@@ -1,6 +1,6 @@
 ---
 
-- name: "Create temporal directory"
+- name: "Create temporary directory"
   tempfile:
     state: directory
     prefix: "taskfile-"
