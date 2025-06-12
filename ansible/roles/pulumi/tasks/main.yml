@@ -3,7 +3,7 @@
 - name: "Create temporal directory"
   ansible.builtin.tempfile:
     state: directory
-    prefix: "joe-"
+    prefix: "pulumi-"
   register: temp_dir
 
 - name: "Get latest version number of pulumi"
