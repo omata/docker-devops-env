@@ -2,7 +2,7 @@
 # file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
 
 - block:
-    - name: "Create temporal directory"
+    - name: "Create temporary directory"
       ansible.builtin.tempfile:
         state: "directory"
         prefix: "ansible-"
@@ -52,7 +52,7 @@
         state: "present"
       when: temp_dir.path is defined and repository_key.stat.exists
 
-    - name: "Cleaning up temporal assets"
+    - name: "Cleaning up temporary assets"
       ansible.builtin.file:
         path: "{{ temp_dir.path }}"
         state: "absent"

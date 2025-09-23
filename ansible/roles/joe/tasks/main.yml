@@ -1,6 +1,6 @@
 ---
 
-- name: "Create temporal directory"
+- name: "Create temporary directory"
   ansible.builtin.tempfile:
     state: directory
     prefix: "joe-"
@@ -33,7 +33,7 @@
     mode: "a+x"
   when: temp_dir.path is defined
 
-- name: "Cleaning up temporal assets"
+- name: "Cleaning up temporary assets"
   ansible.builtin.file:
     path: "{{ temp_dir.path }}"
     state: "absent"

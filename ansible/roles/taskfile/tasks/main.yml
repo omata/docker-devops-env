@@ -31,7 +31,7 @@
     mode: "a+x"
     remote_src: yes
 
-- name: "Cleaning up temporal assets"
+- name: "Cleaning up temporary assets"
   file:
     path: "{{ temp_dir.path }}"
     state: absent
