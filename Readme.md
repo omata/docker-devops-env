@@ -8,7 +8,7 @@ To build this image, it is necessary to have installed the following on your wor
 
 1. packer =~ 1.9.2
 2. python =~ 3.10.12
-3. pipenv =~ 2023.6.18
+3. uv =~ 0.8.11
 4. taskfile =~ 3.28.0
 5. docker =~ 24.0.5
 
@@ -51,18 +51,18 @@ sudo apt-get update && sudo apt-get install packer
 
 > NOTE: It must be taken into consideration that these instructions are for the configuration of the repository in the 64 Bit x86 architecture.
 
-### Pipev on Mac OS
+### uv on Mac OS
 
 **Mac Ports**
 
 ```shell
-sudo port selfupdate && sudo port install pipenv
+sudo port selfupdate && sudo port install uv
 ```
 
 **Python on any platform**
 
 ```shell
-pip3 install --user pipenv
+pip3 install --user uv
 ```
 
 ### Taskfile on any platform
@@ -74,8 +74,7 @@ Follow the installation instructions for your platform on the [Taskfile page](ht
 To build the image we must follow these steps:
 
 1. Clone this repository to your workstation.
-2. Go to the root of the repository and run the command `pipenv install`
-3. Enter the Python virtual environment with `pipenv shell`
+2. Go to the root of the repository and run the command `uv venv && uv sync`.
 
 ## Image building
 
