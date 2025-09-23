@@ -1,0 +1,59 @@
+---
+# file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
+
+  - name: "Create temporary directory"
+    ansible.builtin.tempfile:
+      state: "directory"
+      prefix: "uv-"
+    register: temp_dir
+
+  - name: "Get latest version number of uv"
+    ansible.builtin.uri:
+      url: "https://api.github.com/repos/astral-sh/uv/releases/latest"
+      return_content: yes
+    register: uv_json
+
+  - name: "Set content as json"
+    set_fact:
+      release: "{{ uv_json.content|from_json }}"
+
+  - name: "Download latest version of uv"
+    ansible.builtin.unarchive:
+      src: "{{ uv_pkg_url }}"
+      dest: "{{ temp_dir.path }}"
+      remote_src: yes
+    when: temp_dir.path is defined
+
+  - name: "Ensure installation path exists"
+    ansible.builtin.file:
+      path: "{{ uv_default_path }}"
+      state: "directory"
+      owner: "{{ build_user }}"
+      group: "{{ build_user }}"
+      mode: "0755"
+
+  - name: "Install uv"
+    ansible.builtin.file:
+      src: "{{ temp_dir.path }}/uv-{{ ansible_architecture }}-unknown-linux-gnu/uv"
+      dest: "{{ uv_default_path }}"
+      state: "hard"
+      owner: "{{ build_user }}"
+      group: "{{ build_user }}"
+      mode: "a+x"
+    when: temp_dir.path is defined
+
+  - name: "Install uvx"
+    ansible.builtin.file:
+      src: "{{ temp_dir.path }}/uv-{{ ansible_architecture }}-unknown-linux-gnu/uvx"
+      dest: "{{ uv_default_path }}"
+      state: "hard"
+      owner: "{{ build_user }}"
+      group: "{{ build_user }}"
+      mode: "a+x"
+    when: temp_dir.path is defined
+
+  - name: "Cleaning up temporary assets"
+    ansible.builtin.file:
+      path: "{{ temp_dir.path }}"
+      state: "absent"
+    when: temp_dir.path is defined

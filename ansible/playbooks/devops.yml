@@ -6,6 +6,7 @@
   roles:
     - "image-config"
     - "required-packages"
+    - "user-config"
     - "ansible"
     - "awscli2"
     - "google-cloud-sdk"
@@ -15,7 +16,7 @@
     - "pulumi"
     - "taskfile"
     - "terraform"
-    - "user-config"
     - "python-modules"
     - "starship"
+    - "uv"
     - "clean-up"
