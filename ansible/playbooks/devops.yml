@@ -8,7 +8,6 @@
     - "required-packages"
     - "ansible"
     - "awscli2"
-    - "croc"
     - "google-cloud-sdk"
     - "joe"
     - "s5cmd"
