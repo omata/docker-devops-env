@@ -111,9 +111,9 @@ fi
 
 # set user environment variables
 export SSH_AUTH_SOCK="$(readlink -f /tmp/ssh-*)/$(ls -1 /tmp/ssh-*)"
-if [ -d $HOME/.local ] ; then
-    export PATH=$PATH;$HOME/.local/bin
-fi
+# if [ -d $HOME/.local/bin ] ; then
+#     export PATH="$HOME/.local/bin;$PATH"
+# fi
 
 # Load existing cryptographic keys on ssh keyring.
 for KEYFILE in $(find ${HOME}/.ssh -type f -name '*ami*') ; do
