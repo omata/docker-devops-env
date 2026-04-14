@@ -3,9 +3,13 @@ variable "docker_image" {
   default = "devops"
 }
 
+variable "image_tag" {
+  type    = string
+  default = "latest"
+}
 
 locals {
-  image_tag = "${formatdate("YYYYMMDD-hhmmss", timestamp())}"
+  image_tags = var.image_tag == "latest" ? ["latest"] : [var.image_tag, "latest"]
 }
 
 packer {
@@ -57,7 +61,7 @@ build {
   post-processors {
     post-processor "docker-tag" {
       repository = var.docker_image
-      tags       = [local.image_tag, "latest"]
+      tags       = local.image_tags
     }
   }
 }
