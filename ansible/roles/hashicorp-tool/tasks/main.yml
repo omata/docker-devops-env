@@ -40,19 +40,28 @@
     hashicorp_version_to_install: "{{ tool_version }}"
   when: tool_version != "latest"
 
-- name: "Download {{ tool_name }} {{ hashicorp_version_to_install }} archive"
-  ansible.builtin.get_url:
-    url: "https://releases.hashicorp.com/{{ tool_name }}/{{ hashicorp_version_to_install }}/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
-    dest: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
-    mode: "0644"
+- name: "Create temporary directory for {{ tool_name }}"
+  ansible.builtin.tempfile:
+    state: "directory"
+    prefix: "hashicorp-{{ tool_name }}-"
+  register: hashicorp_temp_dir
 
-- name: "Install {{ tool_name }} {{ hashicorp_version_to_install }}"
-  ansible.builtin.unarchive:
-    src: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
-    dest: "{{ tool_install_path }}"
-    remote_src: true
+- block:
+    - name: "Download {{ tool_name }} {{ hashicorp_version_to_install }} archive"
+      ansible.builtin.get_url:
+        url: "https://releases.hashicorp.com/{{ tool_name }}/{{ hashicorp_version_to_install }}/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+        dest: "{{ hashicorp_temp_dir.path }}/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+        mode: "0644"
 
-- name: "Clean up {{ tool_name }} archive"
-  ansible.builtin.file:
-    path: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
-    state: "absent"
+    - name: "Install {{ tool_name }} {{ hashicorp_version_to_install }}"
+      ansible.builtin.unarchive:
+        src: "{{ hashicorp_temp_dir.path }}/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+        dest: "{{ tool_install_path }}"
+        remote_src: true
+
+  always:
+    - name: "Clean up {{ tool_name }} temporary directory"
+      ansible.builtin.file:
+        path: "{{ hashicorp_temp_dir.path }}"
+        state: "absent"
+      when: hashicorp_temp_dir.path is defined
