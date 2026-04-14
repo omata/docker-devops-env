@@ -39,6 +39,12 @@
         remote_src: true
       loop: "{{ pulumi_binaries.files }}"
 
+    - name: "Generate pulumi bash completion script"
+      ansible.builtin.shell:
+        cmd: "pulumi gen-completion bash > /etc/bash_completion.d/pulumi"
+        creates: "/etc/bash_completion.d/pulumi"
+      changed_when: false
+
   always:
     - name: "Clean up temporary directory"
       ansible.builtin.file:
