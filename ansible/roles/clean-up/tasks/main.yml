@@ -2,8 +2,16 @@
 
 - name: "Clean apt lists cache"
   ansible.builtin.shell:
-    cmd: "rm -rf /var/lib/apt/lists/* && mkdir -p /var/lib/apt/lists/partial"
+    cmd: "rm -rf /var/lib/apt/lists/*"
+  changed_when: false
+
+- name: "Recreate apt lists partial directory"
+  ansible.builtin.file:
+    path: "/var/lib/apt/lists/partial"
+    state: "directory"
+    mode: "0755"
 
 - name: "Clean all temporary files"
   ansible.builtin.shell:
     cmd: "rm -rf /tmp/*"
+  changed_when: false
