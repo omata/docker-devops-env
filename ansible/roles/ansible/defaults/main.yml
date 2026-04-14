@@ -4,7 +4,7 @@
 from_ubuntu_repo: false
 
 # Ansible major version to install from PPA (e.g. "7", "8", "9").
-version_to_install: "10"
+version_to_install: "7"
 
 # Version of the amazon.aws Ansible Galaxy collection to install.
 aws_collection_version: "5.5.0"
