@@ -111,18 +111,6 @@ comprehensive Ansible quality audit was applied across all roles.
 
 ---
 
-## [1.0.4] - 2024-03-21
-
-### Changed
-- Refactored playbook to make architecture detection more configurable across roles.
-- Updated inline comments in several roles to be more meaningful.
-
-### Fixed
-- Fixed an error in the Google Cloud SDK role caused by an invalid YAML block structure.
-- Fixed a typo in a role title.
-
----
-
 ## [1.1.0] - 2025-09-23 / 2026-01-21
 
 > **Note:** these changes were committed to `develop` after the `1.0.4` tag but before the
@@ -143,6 +131,18 @@ comprehensive Ansible quality audit was applied across all roles.
 - Fixed an issue with `$PATH` not including the `uv`-managed binaries directory.
 - Fixed a typo in a comment.
 - Cleaned duplicate entries in `.gitignore`.
+
+---
+
+## [1.0.4] - 2024-03-21
+
+### Changed
+- Refactored playbook to make architecture detection more configurable across roles.
+- Updated inline comments in several roles to be more meaningful.
+
+### Fixed
+- Fixed an error in the Google Cloud SDK role caused by an invalid YAML block structure.
+- Fixed a typo in a role title.
 
 ---
 
