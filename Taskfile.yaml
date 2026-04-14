@@ -22,4 +22,4 @@ tasks:
 
   init:
     cmds:
-      - packer init {{.PACKER_FILE}}
+      - uv run packer init {{.PACKER_FILE}}
