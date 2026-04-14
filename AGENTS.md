@@ -49,6 +49,10 @@ The image is built with a fixed generic user `devops` (UID/GID `1000`). No host 
 - The entrypoint runs as root; `gosu` drops privileges after remapping.
 - Volume paths inside the container are always under `/home/devops/`.
 
+### Ansible version pinned to 7
+`pyproject.toml` pins `ansible~=7.6`. Later versions produce warnings with the Python libraries
+available on Ubuntu 22.04. Do not upgrade beyond the `7.x` series without verifying compatibility.
+
 ### Tool versions are resolved at build time
 Most tools (Terraform, Packer, Pulumi, Taskfile, s5cmd, uv, joe, Starship) are installed at `latest` by querying GitHub API or the HashiCorp index during the Ansible run. `terraform_version` and `packer_version` role defaults can be overridden if a pinned version is needed.
 
@@ -80,6 +84,7 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 1. Edit `PROJECT` var in `docker-compose/Taskfile.yml`.
 2. Fill in `docker-compose/my_env_vars.env` (AWS keys, `APP_ENV`, `TZ`).
 3. Create `docker-compose/src` as a symlink to the IaC project repo.
+4. Create `docker-compose/config.cnf` (SSH client config; may be empty).
 
 Volumes mounted into the container (see `docker-compose/compose.yml`):
 - `config.cnf` → `/home/devops/.ssh/config`
