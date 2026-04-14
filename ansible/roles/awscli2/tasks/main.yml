@@ -17,7 +17,7 @@
 - block:
     - name: "Download awscli-v2 installer"
       ansible.builtin.unarchive:
-        src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture }}.zip"
+        src: "https://awscli.amazonaws.com/awscli-exe-linux-{{ ansible_architecture | lower }}.zip"
         dest: "{{ temp_dir.path }}"
         remote_src: true
         creates: "{{ temp_dir.path }}/aws"
