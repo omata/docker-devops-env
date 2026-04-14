@@ -1,5 +1,2 @@
 ---
-
-# Python module list
-pypy_modules:
-  - "poetry"
+# No role-specific variables currently needed.
