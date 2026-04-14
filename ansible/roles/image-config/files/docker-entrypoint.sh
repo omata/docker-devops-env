@@ -17,14 +17,16 @@ if [ "${TARGET_UID}" != "${CURRENT_UID}" ]; then
     usermod -u "${TARGET_UID}" "${DEVOPS_USER}"
 fi
 
-# Fix ownership of home directory and mounted volumes
-chown -R "${DEVOPS_USER}:${DEVOPS_USER}" "/home/${DEVOPS_USER}"
+# Fix ownership of home directory only, without crossing into bind-mounted
+# volumes (src, tmp, .ssh subdirectories) to avoid slow chown on large trees.
+find "/home/${DEVOPS_USER}" -mount -maxdepth 3 \
+    ! -user "${TARGET_UID}" -exec chown "${TARGET_UID}:${TARGET_GID}" {} +
 
 # Clean up stale ssh-agent sockets from previous runs
 rm -rf /tmp/ssh-*
 
-# Start ssh-agent in the background and export its environment variables
-# so the login shell launched by gosu inherits them
+# Start ssh-agent in the background; eval exports SSH_AUTH_SOCK and
+# SSH_AGENT_PID into this shell's environment which exec gosu inherits.
 eval "$(ssh-agent -s)" > /dev/null
 
 # Hand off to a login shell as the target user, with ssh-agent env exported
