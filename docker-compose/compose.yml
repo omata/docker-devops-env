@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   devops:
     image: devops
@@ -10,8 +9,8 @@ services:
       - PGID=${GID:-1000}
     volumes:
       - ${PWD}/config.cnf:/home/devops/.ssh/config
-      - ${HOME}/.ssh/hiberus/hda/:/home/devops/.ssh/hiberus/hda
-      - ${HOME}/.ssh/apps:/home/devops/.ssh/apps
+      - ${HOME}/.ssh/hiberus/hda/:/home/devops/.ssh/hiberus/hda:ro
+      - ${HOME}/.ssh/apps:/home/devops/.ssh/apps:ro
       - ${PWD}/src:/home/devops/src
       - ${PWD}/tmp:/home/devops/tmp
     env_file: my_env_vars.env
