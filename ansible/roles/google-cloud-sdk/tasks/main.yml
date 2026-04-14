@@ -17,6 +17,7 @@
     - name: "Convert key to binary GPG format"
       ansible.builtin.command:
         cmd: "gpg --dearmor -o /etc/apt/trusted.gpg.d/google-cloud-sdk.gpg {{ temp_dir.path }}/google-cloud-sdk.asc"
+        creates: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
 
     - name: "Set permissions on keyring file"
       ansible.builtin.file:
@@ -28,13 +29,13 @@
     - name: "Configure Google Cloud SDK repository"
       ansible.builtin.apt_repository:
         repo: "{{ gcp_cli_ppa_url }}"
-        state: present
+        state: "present"
 
     - name: "Install Google Cloud SDK"
       ansible.builtin.apt:
         name:
           - "google-cloud-sdk"
-        state: present
+        state: "present"
         update_cache: true
 
   always:
