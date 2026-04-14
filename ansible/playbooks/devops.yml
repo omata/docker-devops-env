@@ -16,7 +16,7 @@
     - "pulumi"
     - "taskfile"
     - "terraform"
+    - "uv"
     - "python-modules"
     - "starship"
-    - "uv"
     - "clean-up"
