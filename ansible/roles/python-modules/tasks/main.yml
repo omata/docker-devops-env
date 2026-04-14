@@ -14,8 +14,9 @@
       - "python3-validators"
       - "python3-yaml"
       - "python3-yapf"
-    state: present
+    state: "present"
 
 - name: "Install latest boto3 and botocore via uv"
   ansible.builtin.command:
-    cmd: "/home/devops/.local/bin/uv pip install --system boto3 botocore"
+    cmd: "{{ uv_default_path }}/uv pip install --system boto3 botocore"
+  changed_when: false
