@@ -1,26 +1,49 @@
 ---
 
+- name: "Create temporary directory"
+  ansible.builtin.tempfile:
+    state: "directory"
+    prefix: "starship-"
+  register: temp_dir
+
 - name: "Get latest version number of starship"
   ansible.builtin.uri:
-    url: https://api.github.com/repos/starship/starship/releases/latest
-    return_content: yes
+    url: "https://api.github.com/repos/starship/starship/releases/latest"
+    return_content: true
   register: starship_json
 
-- name: "Set content as json"
-  set_fact:
-    release: "{{ starship_json.content | from_json }}"
+- name: "Set starship release fact"
+  ansible.builtin.set_fact:
+    starship_release: "{{ starship_json.content | from_json }}"
 
-- name: "Download latest version of starship"
-  ansible.builtin.unarchive:
-    src: "{{ starship_pkg_url }}"
-    dest: "{{ starship_default_path }}"
-    remote_src: yes
+- block:
+    - name: "Download latest version of starship"
+      ansible.builtin.unarchive:
+        src: "{{ starship_pkg_url }}"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
+
+    - name: "Install starship binary"
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/starship"
+        dest: "{{ starship_default_path }}/starship"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        remote_src: true
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined
 
 - name: "Ensure starship configuration directory exists"
   ansible.builtin.file:
     path: "/etc/starship"
     state: "directory"
-    mode: 0755
+    mode: "0755"
 
 - name: "Install starship config file"
   ansible.builtin.copy:
@@ -28,7 +51,7 @@
     dest: "/etc/starship/"
     owner: "root"
     group: "root"
-    mode: 0664
+    mode: "0644"
 
 - name: "Install general profiles"
   ansible.builtin.copy:
@@ -36,6 +59,6 @@
     dest: "/etc/profile.d/{{ item }}"
     owner: "root"
     group: "root"
-    mode: 0644
+    mode: "0644"
   loop:
     - custom_envs.sh
