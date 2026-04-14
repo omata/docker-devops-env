@@ -6,5 +6,5 @@ base_arch:
   aarch64: 'arm64'
 
 # vars for s5cmd
-s5cmd_pkg_url: "https://github.com/peak/s5cmd/releases/download/{{ release.tag_name }}/s5cmd_{{ release.tag_name[1:] }}_Linux-{{ base_arch[ansible_architecture] }}.tar.gz"
+s5cmd_pkg_url: "https://github.com/peak/s5cmd/releases/download/{{ s5cmd_release.tag_name }}/s5cmd_{{ s5cmd_release.tag_name[1:] }}_Linux-{{ base_arch[ansible_architecture | lower] }}.tar.gz"
 s5cmd_default_path: /usr/local/bin/
