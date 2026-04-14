@@ -20,7 +20,7 @@
     dest: "/home/devops/.bashrc"
     owner: "devops"
     group: "devops"
-    mode: 0644
+    mode: "0644"
 
 - name: "Install .bash_profile file"
   ansible.builtin.copy:
@@ -28,26 +28,29 @@
     dest: "/home/devops/.bash_profile"
     owner: "devops"
     group: "devops"
-    mode: 0644
+    mode: "0644"
 
 - name: "Configure user as sudoer"
   ansible.builtin.template:
     src: "sudoer.j2"
     dest: "/etc/sudoers.d/devops"
+    owner: "root"
+    group: "root"
+    mode: "0440"
 
-- name: "Modify locale configuration to set the choosen option"
+- name: "Modify locale configuration to set the chosen option"
   ansible.builtin.lineinfile:
     path: "/etc/locale.gen"
-    regex: "^# {{ locale_config }} UTF-8"
+    regexp: "^# {{ locale_config }} UTF-8"
     line: "{{ locale_config }} UTF-8"
 
 - name: "Reconfigure locale"
   ansible.builtin.command: dpkg-reconfigure --frontend=noninteractive locales
+  changed_when: false
 
 - name: "Update locale configuration"
-  ansible.builtin.command: update-locale LANG=$LANG
-  environment:
-    LANG: "{{ locale_config }}"
+  ansible.builtin.command: "update-locale LANG={{ locale_config }}"
+  changed_when: false
 
 - name: "Set locale wide system environment variables"
   ansible.builtin.template:
