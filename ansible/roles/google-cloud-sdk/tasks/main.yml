@@ -1,5 +1,4 @@
 ---
-# file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
 
 - name: "Create temporary directory"
   ansible.builtin.tempfile:
@@ -7,59 +6,40 @@
     prefix: "gcp-"
   register: temp_dir
 
-- name: "Get Google Cloud SDK ppa key"
-  ansible.builtin.get_url:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    dest: "{{ temp_dir.path }}/google-cloud-sdk.asc"
-  when: temp_dir.path is defined
+- block:
+    - name: "Download Google Cloud SDK repository key"
+      ansible.builtin.get_url:
+        url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+        dest: "{{ temp_dir.path }}/google-cloud-sdk.asc"
+        mode: "0644"
+        force: true
 
-- name: "Ensure key was downloaded"
-  ansible.builtin.stat:
-    path: "{{ temp_dir.path }}/google-cloud-sdk.asc"
-  register: repository_key
-  when: temp_dir.path is defined
+    - name: "Convert key to binary GPG format"
+      ansible.builtin.command:
+        cmd: "gpg --dearmor -o /etc/apt/trusted.gpg.d/google-cloud-sdk.gpg {{ temp_dir.path }}/google-cloud-sdk.asc"
 
-- name: "Convert key to the binary GPG format"
-  ansible.builtin.command: "gpg --dearmor {{ temp_dir.path }}/google-cloud-sdk.asc"
-  when: temp_dir.path is defined and repository_key.stat.exists
+    - name: "Set permissions on keyring file"
+      ansible.builtin.file:
+        path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+        owner: "root"
+        group: "root"
+        mode: "0644"
 
-- name: "Ensure there is not a previous keychain file for Google Cloud SDK ppa"
-  ansible.builtin.stat:
-    path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
-  register: old_keychain
-  when: temp_dir.path is defined and repository_key.stat.exists
+    - name: "Configure Google Cloud SDK repository"
+      ansible.builtin.apt_repository:
+        repo: "{{ gcp_cli_ppa_url }}"
+        state: present
 
-- name: "Delete previous keychain file"
-  ansible.builtin.file:
-    path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
-    state: absent
-  when: temp_dir.path is defined and repository_key.stat.exists and old_keychain.stat.exists
+    - name: "Install Google Cloud SDK"
+      ansible.builtin.apt:
+        name:
+          - "google-cloud-sdk"
+        state: present
+        update_cache: true
 
-- name: "Install ppa repository keychain file"
-  ansible.builtin.file:
-    src: "{{ temp_dir.path }}/google-cloud-sdk.asc.gpg"
-    dest: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
-    state: "hard"
-    owner: "root"
-    group: "root"
-    mode: 0644
-  when: temp_dir.path is defined and repository_key.stat.exists
-
-- name: "Configure Google Cloud SDK repository"
-  ansible.builtin.apt_repository:
-    repo: "{{ gcp_cli_ppa_url }}"
-    state: present
-  when: temp_dir.path is defined and repository_key.stat.exists
-
-- name: "Cleaning up temporary assets"
-  ansible.builtin.file:
-    path: "{{ temp_dir.path }}"
-    state: "absent"
-  when: temp_dir.path is defined
-
-- name: "Install Google Cloud SDK."
-  ansible.builtin.apt:
-    name:
-      - "google-cloud-sdk"
-    state: latest
-    update_cache: true
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined
