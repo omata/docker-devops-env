@@ -48,13 +48,14 @@
       - "ansible"
     state: "present"
     update_cache: true
-  register: ansible_installation
+  register: apt_ansible_install
 
 - block:
     - name: "Create Ansible configuration file"
       ansible.builtin.shell:
         cmd: "ansible-config init --disabled -t all > /etc/ansible/ansible.cfg"
         creates: "/etc/ansible/ansible.cfg"
+      changed_when: false
 
     - name: "Configure ansible-galaxy cache directory"
       community.general.ini_file:
@@ -75,5 +76,6 @@
     - name: "Install AWS collection for Ansible"
       ansible.builtin.command:
         cmd: "ansible-galaxy collection install amazon.aws:{{ aws_collection_version }} -p /usr/share/ansible/collections"
+        creates: "/usr/share/ansible/collections/ansible_collections/amazon/aws"
 
   when: not from_ubuntu_repo
