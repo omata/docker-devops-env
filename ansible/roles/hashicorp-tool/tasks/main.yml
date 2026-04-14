@@ -1,0 +1,58 @@
+---
+# Reusable role for installing any HashiCorp tool from releases.hashicorp.com.
+#
+# Required variables (set via role dependencies or include_role vars):
+#   tool_name:    e.g. "terraform", "packer"
+#   tool_version: e.g. "latest" or "1.9.0"
+#
+# Optional overrides (defaults below):
+#   tool_install_path: destination directory for the binary
+
+- name: "Resolve architecture string for {{ tool_name }}"
+  ansible.builtin.set_fact:
+    hashicorp_arch: "{{ _hashicorp_arch_map[ansible_architecture | lower] }}"
+  vars:
+    _hashicorp_arch_map:
+      i386:    "386"
+      x86_64:  "amd64"
+      amd64:   "amd64"
+      aarch64: "arm64"
+      armv7l:  "arm"
+      armv6l:  "arm"
+
+- name: "Fetch HashiCorp release index for {{ tool_name }}"
+  ansible.builtin.uri:
+    url: "https://releases.hashicorp.com/{{ tool_name }}/index.json"
+    return_content: true
+  register: hashicorp_index
+  when: tool_version == "latest"
+
+- name: "Resolve latest {{ tool_name }} version"
+  ansible.builtin.set_fact:
+    hashicorp_version_to_install: >-
+      {{ (hashicorp_index.content | from_json).versions
+         | select('match', '^[0-9]+\.[0-9]+\.[0-9]+$')
+         | list | sort_versions | last }}
+  when: tool_version == "latest"
+
+- name: "Use pinned {{ tool_name }} version"
+  ansible.builtin.set_fact:
+    hashicorp_version_to_install: "{{ tool_version }}"
+  when: tool_version != "latest"
+
+- name: "Download {{ tool_name }} {{ hashicorp_version_to_install }} archive"
+  ansible.builtin.get_url:
+    url: "https://releases.hashicorp.com/{{ tool_name }}/{{ hashicorp_version_to_install }}/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+    dest: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+    mode: "0644"
+
+- name: "Install {{ tool_name }} {{ hashicorp_version_to_install }}"
+  ansible.builtin.unarchive:
+    src: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+    dest: "{{ tool_install_path }}"
+    remote_src: true
+
+- name: "Clean up {{ tool_name }} archive"
+  ansible.builtin.file:
+    path: "/tmp/{{ tool_name }}_{{ hashicorp_version_to_install }}_linux_{{ hashicorp_arch }}.zip"
+    state: "absent"
