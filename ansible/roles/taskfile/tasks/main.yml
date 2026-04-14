@@ -1,38 +1,40 @@
 ---
 
 - name: "Create temporary directory"
-  tempfile:
+  ansible.builtin.tempfile:
     state: directory
     prefix: "taskfile-"
   register: temp_dir
 
 - name: "Get latest version number of taskfile"
   ansible.builtin.uri:
-    url: https://api.github.com/repos/go-task/task/releases/latest
-    return_content: yes
+    url: "https://api.github.com/repos/go-task/task/releases/latest"
+    return_content: true
   register: taskfile_json
 
-- name: "Set content as json"
-  set_fact:
-    release: "{{ taskfile_json.content | from_json }}"
+- name: "Set taskfile release fact"
+  ansible.builtin.set_fact:
+    taskfile_release: "{{ taskfile_json.content | from_json }}"
 
-- name: "Download latest version of taskfile"
-  ansible.builtin.unarchive:
-    src: "{{ taskfile_pkg_url }}"
-    dest: "{{ temp_dir.path }}"
-    remote_src: yes
+- block:
+    - name: "Download latest version of taskfile"
+      ansible.builtin.unarchive:
+        src: "{{ taskfile_pkg_url }}"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
 
-- name: "Install taskfile"
-  ansible.builtin.copy:
-    src: "{{ temp_dir.path }}/task"
-    dest: "{{ taskfile_default_path }}/task"
-    owner: "root"
-    group: "root"
-    mode: "a+x"
-    remote_src: yes
+    - name: "Install taskfile"
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/task"
+        dest: "{{ taskfile_default_path }}/task"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        remote_src: true
 
-- name: "Cleaning up temporary assets"
-  file:
-    path: "{{ temp_dir.path }}"
-    state: absent
-  when: temp_dir.path is defined
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined
