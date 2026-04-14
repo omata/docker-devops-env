@@ -1,3 +1,3 @@
 # vars for uv
 uv_pkg_url: "https://github.com/astral-sh/uv/releases/download/{{ release.tag_name }}/uv-{{ ansible_architecture }}-unknown-linux-gnu.tar.gz"
-uv_default_path: "/home/{{ build_user }}/.local/bin/"
+uv_default_path: "/home/devops/.local/bin/"

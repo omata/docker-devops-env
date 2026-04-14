@@ -28,27 +28,27 @@
     ansible.builtin.file:
       path: "{{ uv_default_path }}"
       state: "directory"
-      owner: "{{ build_user }}"
-      group: "{{ build_user }}"
+      owner: "devops"
+      group: "devops"
       mode: "0755"
 
   - name: "Install uv"
-    ansible.builtin.file:
+    ansible.builtin.copy:
       src: "{{ temp_dir.path }}/uv-{{ ansible_architecture }}-unknown-linux-gnu/uv"
       dest: "{{ uv_default_path }}"
-      state: "hard"
-      owner: "{{ build_user }}"
-      group: "{{ build_user }}"
+      remote_src: true
+      owner: "devops"
+      group: "devops"
       mode: "a+x"
     when: temp_dir.path is defined
 
   - name: "Install uvx"
-    ansible.builtin.file:
+    ansible.builtin.copy:
       src: "{{ temp_dir.path }}/uv-{{ ansible_architecture }}-unknown-linux-gnu/uvx"
       dest: "{{ uv_default_path }}"
-      state: "hard"
-      owner: "{{ build_user }}"
-      group: "{{ build_user }}"
+      remote_src: true
+      owner: "devops"
+      group: "devops"
       mode: "a+x"
     when: temp_dir.path is defined
 
