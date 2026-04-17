@@ -27,10 +27,11 @@ Rellena `my_env_vars.env` con los valores de tu entorno:
 APP_ENV=<nombre-del-proyecto>
 
 # Zona horaria (formato base de datos IANA tz)
-TZ=<zona-horaria>                    # p. ej. Europe/Madrid
+TZ=Europe/Madrid                     # valor por defecto; cámbialo si es necesario
 ```
 
-> `my_env_vars.env` no se commitea al repositorio. Mantenlo fuera del control de versiones.
+> `my_env_vars.env` está versionado en el repositorio como plantilla con valores de ejemplo.
+> Si añades secretos reales o datos personales, mantén esa copia fuera del control de versiones (p. ej. ignorándola con gitignore).
 >
 > Las credenciales AWS **no** se definen aquí. Utiliza los mecanismos estándar de AWS (`~/.aws/credentials`, `AWS_PROFILE`, roles IAM, etc.) y móntalos en el contenedor si es necesario.
 
@@ -161,5 +162,4 @@ docker compose -p <PROJECT> exec -u devops devops bash -l
 
 ## Remapeo de usuario (PUID / PGID)
 
-`compose.yml` pasa el `$UID` y `$GID` del usuario del host al contenedor como `PUID` y `PGID`.
-El entrypoint remapea el usuario interno `devops` a estos valores para que los archivos creados dentro del contenedor sean propiedad de tu usuario del host. No es necesario reconstruir la imagen al cambiar de usuario.
+`compose.yml` pasa el `$UID` y `$GID` del usuario del host al contenedor como `PUID` y `PGID`. El entrypoint remapea el usuario interno `devops` a estos valores para que los archivos creados dentro del contenedor sean propiedad de tu usuario del host. No es necesario reconstruir la imagen al cambiar de usuario.
