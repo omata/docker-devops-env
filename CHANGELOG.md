@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Removed `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_DEFAULT_REGION` from
+  `docker-compose/my_env_vars.env`. AWS credentials should be provided through the standard
+  AWS mechanisms (`~/.aws/credentials`, `AWS_PROFILE`, IAM roles, etc.).
+
+### Added
+- Documentation: "Usage patterns" section added to `docker-compose/Readme.md` and
+  `docker-compose/Léeme.md` describing two deployment models — one container per project
+  (recommended) and a single shared container for all projects — with directory layout
+  examples and guidance on when to choose each approach.
+
 ---
 
 ## [2.0.0] - 2026-04-14
