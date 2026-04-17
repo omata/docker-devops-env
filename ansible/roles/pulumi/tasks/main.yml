@@ -8,32 +8,46 @@
 
 - name: "Get latest version number of pulumi"
   ansible.builtin.uri:
-    url: https://api.github.com/repos/pulumi/pulumi/releases/latest
-    return_content: yes
+    url: "https://api.github.com/repos/pulumi/pulumi/releases/latest"
+    return_content: true
   register: pulumi_json
 
-- name: "Set content as json"
-  set_fact:
-    release: "{{ pulumi_json.content | from_json }}"
+- name: "Set pulumi release fact"
+  ansible.builtin.set_fact:
+    pulumi_release: "{{ pulumi_json.content | from_json }}"
 
-- name: "Download latest version of pulumi"
-  ansible.builtin.unarchive:
-    src: "{{ pulumi_pkg_url }}"
-    dest: "{{ temp_dir.path }}"
-    remote_src: yes
+- block:
+    - name: "Download latest version of pulumi"
+      ansible.builtin.unarchive:
+        src: "{{ pulumi_pkg_url }}"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
 
-- name: "Install pulumi"
-  ansible.builtin.copy:
-    src: "{{ temp_dir.path }}/pulumi/"
-    dest: "{{ pulumi_default_path }}"
-    owner: "root"
-    group: "root"
-    mode: "a+x"
-    remote_src: true
-  when: temp_dir.path is defined
+    - name: "Find pulumi binaries"
+      ansible.builtin.find:
+        paths: "{{ temp_dir.path }}/pulumi"
+        file_type: file
+      register: pulumi_binaries
 
-- name: "Cleaning up temporary assets"
-  ansible.builtin.file:
-    path: "{{ temp_dir.path }}"
-    state: "absent"
-  when: temp_dir.path is defined
+    - name: "Install pulumi binaries"
+      ansible.builtin.copy:
+        src: "{{ item.path }}"
+        dest: "{{ pulumi_default_path }}/{{ item.path | basename }}"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        remote_src: true
+      loop: "{{ pulumi_binaries.files }}"
+
+    - name: "Generate pulumi bash completion script"
+      ansible.builtin.shell:
+        cmd: "pulumi gen-completion bash > /etc/bash_completion.d/pulumi"
+        creates: "/etc/bash_completion.d/pulumi"
+      changed_when: false
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined

@@ -1,5 +1,5 @@
 ---
-# file: serversBootstrap/roles/requirements/ansible/tasks/main.yml
+# file: roles/ansible/tasks/main.yml
 
 - block:
     - name: "Create temporary directory"
@@ -8,83 +8,74 @@
         prefix: "ansible-"
       register: temp_dir
 
-    - name: "Get ansible ppa key"
+    - name: "Download Ansible PPA key"
       ansible.builtin.get_url:
         url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6125e2a8c77f2818fb7bd15b93c4a3fd7bb9c367"
         dest: "{{ temp_dir.path }}/ansible.asc"
-      when: temp_dir.path is defined
 
-    - name: "Ensure key was downloaded"
-      ansible.builtin.stat:
-        path: "{{ temp_dir.path }}/ansible.asc"
-      register: repository_key
-      when: temp_dir.path is defined
+    - name: "Convert key to binary GPG format"
+      ansible.builtin.command:
+        cmd: "gpg --dearmor {{ temp_dir.path }}/ansible.asc"
+        creates: "{{ temp_dir.path }}/ansible.asc.gpg"
 
-    - name: "Convert key to the binary GPG format"
-      ansible.builtin.command: "gpg --dearmor {{ temp_dir.path }}/ansible.asc"
-      when: temp_dir.path is defined and repository_key.stat.exists
-
-    - name: "Ensure there is not a previous keychain file for ansible ppa"
-      ansible.builtin.stat:
-        path: "/etc/apt/trusted.gpg.d/ansible.gpg"
-      register: old_keychain
-      when: temp_dir.path is defined and repository_key.stat.exists
-
-    - name: "Delete previous keychain file"
-      ansible.builtin.file:
-        path: "/etc/apt/trusted.gpg.d/ansible.gpg"
-        state: absent
-      when: temp_dir.path is defined and repository_key.stat.exists and old_keychain.stat.exists
-
-    - name: "Install ppa repository keychain file"
-      ansible.builtin.file:
+    - name: "Install PPA repository keychain file"
+      ansible.builtin.copy:
         src: "{{ temp_dir.path }}/ansible.asc.gpg"
         dest: "/etc/apt/trusted.gpg.d/ansible.gpg"
-        state: "hard"
+        remote_src: true
         owner: "root"
         group: "root"
-        mode: 0644
-      when: temp_dir.path is defined and repository_key.stat.exists
+        mode: "0644"
+        force: true
 
-    - name: "Configure ansible repository"
+    - name: "Configure Ansible repository"
       ansible.builtin.apt_repository:
         repo: "{{ ansible_ppa_url }}"
         state: "present"
-      when: temp_dir.path is defined and repository_key.stat.exists
 
-    - name: "Cleaning up temporary assets"
+  always:
+    - name: "Clean up temporary directory"
       ansible.builtin.file:
         path: "{{ temp_dir.path }}"
         state: "absent"
       when: temp_dir.path is defined
-  when: from_ubuntu_repo is false
 
-- name: "Install Ansible."
+  when: not from_ubuntu_repo
+
+- name: "Install Ansible"
   ansible.builtin.apt:
     name:
       - "ansible"
-    state: "latest"
+    state: "present"
     update_cache: true
-  register: ansible_installation
+  register: apt_ansible_install
 
 - block:
-    - name: "Create ansible configuration file"
+    - name: "Create Ansible configuration file"
       ansible.builtin.shell:
-        cmd: ansible-config init --disabled -t all > /etc/ansible/ansible.cfg
-      register: create_ansible_config_file
-      when: ansible_installation.failed is false
+        cmd: "ansible-config init --disabled -t all > /etc/ansible/ansible.cfg"
+        creates: "/etc/ansible/ansible.cfg"
+      changed_when: false
 
-    - name: "Configure ansible-galaxy cache"
-      ansible.builtin.lineinfile:
+    - name: "Configure ansible-galaxy cache directory"
+      community.general.ini_file:
         path: "/etc/ansible/ansible.cfg"
-        insertafter: "^;cache_dir=~/.ansible/galaxy_cache"
-        line: "cache_dir=/usr/share/ansible/collections/.ansible/galaxy_cache"
+        section: "galaxy"
+        option: "cache_dir"
+        value: "/usr/share/ansible/collections/.ansible/galaxy_cache"
         state: "present"
-      when: ansible_installation.failed is false and create_ansible_config_file.failed is false
 
-    - name: "Install AWS collection for ansible"
+    - name: "Ensure galaxy cache directory exists"
+      ansible.builtin.file:
+        path: "/usr/share/ansible/collections/.ansible/galaxy_cache"
+        state: "directory"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+
+    - name: "Install AWS collection for Ansible"
       ansible.builtin.command:
-        cmd: ansible-galaxy collection install amazon.aws:5.5.0 -p /usr/share/ansible/collections
-      register: install_ansible_collection
-      when: ansible_installation.failed is false
-  when: from_ubuntu_repo is false
+        cmd: "ansible-galaxy collection install amazon.aws:{{ aws_collection_version }} -p /usr/share/ansible/collections"
+        creates: "/usr/share/ansible/collections/ansible_collections/amazon/aws"
+
+  when: not from_ubuntu_repo

@@ -6,5 +6,5 @@ base_arch:
   aarch64: 'arm64'
 
 # vars for pulumi
-pulumi_pkg_url: "https://github.com/pulumi/pulumi/releases/download/{{ release.tag_name }}/pulumi-{{ release.tag_name }}-linux-{{ base_arch[ansible_architecture] }}.tar.gz"
+pulumi_pkg_url: "https://github.com/pulumi/pulumi/releases/download/{{ pulumi_release.tag_name }}/pulumi-{{ pulumi_release.tag_name }}-linux-{{ base_arch[ansible_architecture | lower] }}.tar.gz"
 pulumi_default_path: /usr/local/bin/

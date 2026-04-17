@@ -6,4 +6,4 @@
     dest: "/opt/docker-entrypoint.sh"
     owner: "root"
     group: "root"
-    mode: "a+x"
+    mode: "0755"

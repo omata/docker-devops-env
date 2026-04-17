@@ -1,15 +1,17 @@
 ---
 
-- name: "Clean superfluos directories"
+- name: "Clean apt lists cache"
+  ansible.builtin.shell:
+    cmd: "rm -rf /var/lib/apt/lists/*"
+  changed_when: false
+
+- name: "Recreate apt lists partial directory"
   ansible.builtin.file:
-    path: "{{ item }}"
-    state: "absent"
-  loop:
-    - "/var/lib/apt/lists"
+    path: "/var/lib/apt/lists/partial"
+    state: "directory"
+    mode: "0755"
 
 - name: "Clean all temporary files"
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: "absent"
-  with_fileglob:
-    - "/tmp/*"
+  ansible.builtin.shell:
+    cmd: "rm -rf /tmp/*"
+  changed_when: false

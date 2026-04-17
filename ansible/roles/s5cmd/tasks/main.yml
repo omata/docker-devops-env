@@ -1,17 +1,40 @@
 ---
 
+- name: "Create temporary directory"
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "s5cmd-"
+  register: temp_dir
+
 - name: "Get latest version number of s5cmd"
   ansible.builtin.uri:
-    url: https://api.github.com/repos/peak/s5cmd/releases/latest
-    return_content: yes
+    url: "https://api.github.com/repos/peak/s5cmd/releases/latest"
+    return_content: true
   register: s5cmd_json
 
-- name: "Set content as json"
-  set_fact:
-    release: "{{ s5cmd_json.content | from_json }}"
+- name: "Set s5cmd release fact"
+  ansible.builtin.set_fact:
+    s5cmd_release: "{{ s5cmd_json.content | from_json }}"
 
-- name: "Download latest version of s5cmd"
-  ansible.builtin.unarchive:
-    src: "{{ s5cmd_pkg_url }}"
-    dest: "{{ s5cmd_default_path }}"
-    remote_src: yes
+- block:
+    - name: "Download latest version of s5cmd"
+      ansible.builtin.unarchive:
+        src: "{{ s5cmd_pkg_url }}"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
+
+    - name: "Install s5cmd"
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/s5cmd"
+        dest: "{{ s5cmd_default_path }}/s5cmd"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        remote_src: true
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined
