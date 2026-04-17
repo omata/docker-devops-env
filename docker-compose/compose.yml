@@ -1,6 +1,7 @@
 services:
   devops:
-    image: devops
+    image: devops:<version|latest>  # Set the version or use 'latest'
+    container_name: devops
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -8,10 +9,11 @@ services:
       - PUID=${UID:-1000}
       - PGID=${GID:-1000}
     volumes:
+      - ${HOME}/.aws:/home/devops/.aws
       - ${PWD}/config.cnf:/home/devops/.ssh/config
-      - ${HOME}/.ssh/hiberus/hda/:/home/devops/.ssh/hiberus/hda:ro
+      - ${HOME}/.ssh/hiberus/hda/:/home/devops/.ssh/<path tou your keys>:ro
       - ${HOME}/.ssh/apps:/home/devops/.ssh/apps:ro
-      - ${PWD}/src:/home/devops/src
+      - ${PWD}/src:/home/devops/src  # Where src is the folder with IaC repositorie
       - ${PWD}/tmp:/home/devops/tmp
     env_file: my_env_vars.env
     ulimits:
