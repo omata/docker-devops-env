@@ -9,18 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- `Readme.md` (root) rewritten in English: updated prerequisites, modern `uv` installation
-  instructions, project layout table, PUID/PGID runtime notes, cross-link to Spanish version.
-- `Léeme.md` (root) created: Spanish translation of the rewritten `Readme.md`.
-- `docker-compose/Readme.md` rewritten in English: full setup guide (PROJECT var,
-  `my_env_vars.env`, `src` symlink, `config.cnf`), volume table with `:ro` mounts, task
-  reference table, manual shell command, PUID/PGID section.
-- `docker-compose/Léeme.md` created: Spanish translation of the rewritten
-  `docker-compose/Readme.md`.
-- `AGENTS.md`: added step 4 (create `config.cnf`) to the docker-compose setup section; added
-  "Ansible version pinned to 7" quirk entry.
-
 ---
 
 ## [2.0.0] - 2026-04-14
@@ -35,14 +23,27 @@ comprehensive Ansible quality audit was applied across all roles.
   setups may need ownership adjustments on host directories.
 - `docker compose exec` now requires `-u devops` to enter the container as the correct user.
 - The `croc` tool has been removed; `wormhole` is available as a replacement.
-- `boto3`/`botocore` are no longer installed via `apt`; they are installed as the latest versions
-  via `uv pip`.
+- `boto3`/`botocore` are no longer installed solely via `apt`; the latest versions are installed
+  into the `devops` user's site-packages via `pip3 install --user`, alongside an updated
+  `requests` to resolve the `urllib3` version conflict.
+- Docker image tagging changed from timestamp (`YYYYMMDD-hhmmss`) to git-based versioning
+  (`git describe --tags`). Images without a git tag are tagged as `latest` only.
 
 ### Added
+- `Readme.md` (root) rewritten in English: updated prerequisites, modern `uv` installation
+  instructions, project layout table, PUID/PGID runtime notes, cross-link to Spanish version.
+- `Léeme.md` (root) created: Spanish translation of the rewritten `Readme.md`.
+- `docker-compose/Readme.md` rewritten in English: full setup guide (PROJECT var,
+  `my_env_vars.env`, `src` symlink, `config.cnf`), volume table with `:ro` mounts, task
+  reference table, manual shell command, PUID/PGID section.
+- `docker-compose/Léeme.md` created: Spanish translation of the rewritten
+  `docker-compose/Readme.md`.
+- `AGENTS.md`: repository architecture guide and developer guidelines for AI agents, including
+  ground rules (commit policy, language) and git flow workflow documentation.
+- `CHANGELOG.md`: project changelog following Keep a Changelog and Semantic Versioning.
 - Runtime PUID/PGID remapping: `docker-entrypoint.sh` reads `PUID`/`PGID` env vars and remaps
   the `devops` user via `usermod`/`groupmod` before executing `gosu devops bash -l`.
 - `gosu` added to required packages for privilege-dropping in the entrypoint.
-- `AGENTS.md`: repository architecture guide and developer guidelines for AI agents.
 - `ansible/roles/hashicorp-tool/`: new shared Ansible role that installs any HashiCorp tool
   (Terraform, Packer inside the image) from a single parameterised definition.
 - `ansible/playbooks/filter_plugins/sort_versions.py`: centralised `sort_versions` filter
@@ -74,8 +75,12 @@ comprehensive Ansible quality audit was applied across all roles.
   `copy` module.
 - `google-cloud-sdk` role: restored `gpg --dearmor` for ASCII-armoured key; added `creates`
   for idempotency; quoted `state` values.
-- `python-modules` role: use `uv_default_path` variable; added `changed_when: false`;
-  quoted `state` value.
+- `python-modules` role: `boto3`, `botocore` and `requests` are now installed via
+  `pip3 install --user` as the `devops` user; the system apt packages (`python3-boto3`,
+  `python3-botocore`) are kept as a baseline.
+- `Taskfile.yaml`: image tagging switched from timestamp to `git describe --tags`, falling
+  back to `latest` when no tag is present; tag is passed to Packer via `-var image_tag`.
+- `packer/devops.pkr.hcl`: added `image_tag` variable for git-based tagging.
 - `uv` role: replaced hard links with `copy`, fixed ownership hardcoding, added FQCN, correct
   boolean values, `block/always`, `arch | lower`, octal `mode: "0755"`.
 - `image-config` role: replaced relative `mode: a+x` with absolute octal `mode: "0755"`.
@@ -108,6 +113,11 @@ comprehensive Ansible quality audit was applied across all roles.
   changing ownership of host files.
 - `.bashrc`: `SSH_AUTH_SOCK` was unset when the socket path was empty, causing the variable to
   remain with an empty string instead of being unset cleanly.
+- `entrypoint`: `ssh-agent` was started as root, creating a socket owned by `root:root` with
+  `0600` permissions; the `devops` user could not connect. Additionally, the socket path was
+  random (`/tmp/ssh-XXXXXX/agent.N`) and never matched the `.bashrc` fallback. Fixed by
+  running `ssh-agent` as the target user via `gosu` with a fixed socket path
+  (`/tmp/ssh-agent.sock`).
 
 ---
 
