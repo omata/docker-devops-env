@@ -101,7 +101,7 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 ## Required setup before using `docker-compose/`
 
 1. Edit `PROJECT` var in `docker-compose/Taskfile.yml`.
-2. Fill in `docker-compose/my_env_vars.env` (AWS keys, `APP_ENV`, `TZ`).
+2. Fill in `docker-compose/my_env_vars.env` (`APP_ENV`, `TZ`).
 3. Create `docker-compose/src` as a symlink to the IaC project repo.
 4. Create `docker-compose/config.cnf` (SSH client config; may be empty).
 
