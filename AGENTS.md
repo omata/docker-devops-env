@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## Ground rules for agents
+
+- **Never create commits unless the user explicitly asks for it.**
+- Commit messages must be written in English, one commit per fix or feature.
+- The user communicates in Spanish; always respond in Spanish.
+
+---
+
 ## What this repo is
 
 Builds a Docker image (`devops:latest`) containing IaC/DevOps tooling (Terraform, Packer, Ansible, AWS CLI, gcloud, Pulumi, etc.) via **Packer + Ansible** on top of `ubuntu:22.04`. This is **not** a Dockerfile-based build.
