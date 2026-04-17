@@ -3,24 +3,13 @@ variable "docker_image" {
   default = "devops"
 }
 
-variable "username" {
+variable "image_tag" {
   type    = string
-  default = env("USER")
+  default = "latest"
 }
-
-variable "uid" {
-  type    = string
-  default = "1000"
-}
-
-variable "gid" {
-  type    = string
-  default = "1000"
-}
-
 
 locals {
-  image_tag = "${formatdate("YYYYMMDD-hhmmss", timestamp())}"
+  image_tags = var.image_tag == "latest" ? ["latest"] : [var.image_tag, "latest"]
 }
 
 packer {
@@ -41,8 +30,8 @@ source "docker" "ubuntu" {
   commit = true
     changes = [
       "LABEL maintainer='Oscar A. Mata T. <oscar.mata[at]gmail.com>'",
-      "WORKDIR /home/${var.username}",
-      "USER ${var.username}",
+      "WORKDIR /home/devops",
+      "USER root",
       "ENTRYPOINT [\"/opt/docker-entrypoint.sh\"]"
     ]
 }
@@ -61,25 +50,18 @@ build {
 
   provisioner "ansible" {
     playbook_file = "./ansible/playbooks/devops.yml"
-    extra_arguments = [
-      "-e", "build_user=${var.username}",
-      "-e", "build_group=${var.username}",
-      "-e", "build_user_id=${var.uid}",
-      "-e", "build_group_id=${var.gid}"
-    ]
   }
 
   provisioner "shell" {
     inline = [
-      "sudo find /home/ -type d -name '.ansible' -exec rm -rf '{}' +",
-      "rm -rf '/~${var.username}'"
+      "find /home/ -type d -name '.ansible' -exec rm -rf '{}' +"
     ]
   }
 
   post-processors {
     post-processor "docker-tag" {
       repository = var.docker_image
-      tags       = [local.image_tag, "latest"]
+      tags       = local.image_tags
     }
   }
 }

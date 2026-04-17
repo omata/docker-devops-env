@@ -8,9 +8,11 @@ case $- in
       *) return;;
 esac
 
-# set USER environment variable.
-export USER="$(whoami)"
-
+# set user environment variables
+export PATH="${HOME}/.local/bin:${PATH}"
+# SSH_AUTH_SOCK is inherited from the entrypoint (ssh-agent started as root
+# before gosu drops to devops). Only set the fallback if not already defined.
+export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-/tmp/ssh-agent.sock}"
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -109,27 +111,13 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
-# set user environment variables
-export SSH_AUTH_SOCK="$(readlink -f /tmp/ssh-*)/$(ls -1 /tmp/ssh-*)"
-if [ -d $HOME/.local ] ; then
-    export PATH=$PATH;$HOME/.local/bin
-fi
-
 # Load existing cryptographic keys on ssh keyring.
-for KEYFILE in $(find ${HOME}/.ssh -type f -name '*ami*') ; do
-    head -n 1 "${KEYFILE}" | egrep -q 'BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY'
+while IFS= read -r KEYFILE; do
+    head -n 1 "${KEYFILE}" | grep -qE 'BEGIN (RSA|DSA|EC|OPENSSH) PRIVATE KEY'
     if [ $? -eq 0 ] ; then
         ssh-add "${KEYFILE}" 2>/dev/null
     fi
-done
-
-# Set correct permissions for user and project directories
-USERDIRS=".ssh src tmp"
-for USRDIR in ${USERDIRS} ; do
-    if [[ -d ${HOME}/${USRDIR} ]] && [[ "$(stat -c %U ${HOME}/${USRDIR})" != "${USER}" ]] ; then
-        sudo chown -R ${USER}:${USER} ${HOME}/${USRDIR} 2>&1 > /dev/null
-    fi
-done
+done < <(find "${HOME}/.ssh" -type f -name '*ami*' 2>/dev/null)
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile

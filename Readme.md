@@ -1,86 +1,154 @@
-Here is the translation of the Markdown file to English:
+# DevOps tooling image
 
-# Docker image for IaC tool management
+Docker image providing a curated set of IaC/DevOps tools (Terraform, Packer, Ansible, AWS CLI,
+Google Cloud SDK, Pulumi, and more), built with **Packer + Ansible** on top of `ubuntu:22.04`.
+
+> Spanish version: [Léeme.md](Léeme.md)
+
+---
+
+## How it works
+
+Packer starts a fresh `ubuntu:22.04` container, provisions it with Ansible, and commits the
+result as `devops:latest` (plus a timestamped tag `devops:YYYYMMDD-hhmmss`). There is no
+Dockerfile; the entire image definition lives in `packer/devops.pkr.hcl` and the Ansible roles
+under `ansible/roles/`.
+
+At runtime the container entrypoint (`/opt/docker-entrypoint.sh`) remaps the internal `devops`
+user (UID/GID `1000`) to whatever `PUID`/`PGID` the host passes in, then hands off execution
+to `gosu devops bash -l`. This means the same image works for any host user without rebuilding.
+
+---
 
 ## Requirements
 
-To build this image, it is necessary to have installed the following on your workstation:
+The following tools must be available on your workstation before building the image.
 
-1. packer =~ 1.9.2
-2. python =~ 3.10.12
-3. pipenv =~ 2023.6.18
-4. taskfile =~ 3.28.0
-5. docker =~ 24.0.5
+| Tool | Notes |
+|---|---|
+| **Python 3.10** | Pinned via `.python-version`; managed by `uv` |
+| **uv** | Manages the Python virtualenv and runs Ansible + Packer |
+| **Task** | Task runner; see [taskfile.dev](https://taskfile.dev/installation/) |
+| **Docker** | Engine must be running |
 
-## Installation of requirements
+> **Packer is not installed globally.** It is invoked through `uv run packer`, so it runs inside
+> the project virtualenv where `ansible-playbook` is also available. Do not add a system-wide
+> Packer installation.
 
-### Packer on Mac OS
+---
 
-It can be installed using [Mac Ports](https://www.macports.org/install.php) or [Brew](https://docs.brew.sh/Installation), or by directly downloading the binary from the [packer page](https://developer.hashicorp.com/packer/downloads) and copying it to the path `${HOME}/.local/bin` or any other application path within the user's ${PATH} environment variable.
+## Installation
 
-**Mac Ports**
+### Python 3.10
 
+Install Python 3.10 for your platform and ensure it is the active version, or let `uv` handle it
+automatically when you run `uv venv`.
+
+### uv
+
+**macOS — MacPorts**
 ```shell
-sudo port selfupdate && sudo port install packer
+sudo port selfupdate && sudo port install uv
 ```
 
-**Brew**
-
+**macOS — Homebrew**
 ```shell
-# First we add the Hashicorp repository in brew
-brew tap hashicorp/tap
-
-# Install packer
-brew install hashicorp/tap/packer
+brew install uv
 ```
 
-### Packer on Linux
-
-These instructions are for Debian or derivatives:
-
+**Any platform (installer script)**
 ```shell
-# Download the cryptographic key from the repository
-curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-
-# We add the official Hshicorp repository
-sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-
-# We update the package DB and install packer
-sudo apt-get update && sudo apt-get install packer
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-> NOTE: It must be taken into consideration that these instructions are for the configuration of the repository in the 64 Bit x86 architecture.
+### Task
 
-### Pipev on Mac OS
+Follow the installation instructions for your platform on the
+[Taskfile installation page](https://taskfile.dev/installation/).
 
-**Mac Ports**
+### Docker
+
+Install Docker Desktop (macOS/Windows) or Docker Engine (Linux) from
+[docs.docker.com/get-docker](https://docs.docker.com/get-docker/).
+
+---
+
+## Building the image
 
 ```shell
-sudo port selfupdate && sudo port install pipenv
+# 1. Clone the repository
+git clone <repo-url>
+cd devops
+
+# 2. Create the virtualenv and install dependencies (Ansible 7, ruff, certifi)
+uv venv && uv sync
+
+# 3. Build the image
+task build
 ```
 
-**Python on any platform**
+`task build` calls `task init` first (downloads Packer plugins) and then runs
+`uv run packer build packer/devops.pkr.hcl`.
+
+---
+
+## Development and maintenance
+
+Use `task build:debug` when iterating on Ansible roles. In debug mode, if Ansible fails Packer
+pauses and prompts `[a]bort / [r]etry`. Fix the failing role and press `r` to retry without
+restarting the whole build from scratch.
 
 ```shell
-pip3 install --user pipenv
+task build:debug
 ```
 
-### Taskfile on any platform
+### Project layout
 
-Follow the installation instructions for your platform on the [Taskfile page](https://taskfile.dev/installation/).
+```
+.
+├── Taskfile.yaml                        # Root task runner (build, build:debug, init)
+├── pyproject.toml                       # Python deps: ansible~=7.6, ruff, certifi
+├── packer/
+│   └── devops.pkr.hcl                   # Packer build definition
+├── ansible/
+│   ├── playbooks/
+│   │   ├── devops.yml                   # Main playbook (role order)
+│   │   └── filter_plugins/
+│   │       └── sort_versions.py         # Custom filter: sort_versions (packaging.version)
+│   └── roles/
+│       ├── ansible/                     # Installs Ansible 7 + AWS collection
+│       ├── awscli2/                     # AWS CLI v2
+│       ├── clean-up/                    # Removes build artefacts
+│       ├── google-cloud-sdk/            # gcloud CLI
+│       ├── hashicorp-tool/              # Shared role: Terraform + Packer (inside image)
+│       ├── image-config/                # Entrypoint, locale, timezone
+│       ├── pulumi/                      # Pulumi CLI + bash completion
+│       ├── python-modules/              # Extra pip packages via uv
+│       ├── starship/                    # Starship prompt
+│       ├── user-config/                 # devops user, sudoers, .bashrc, .bash_profile
+│       └── uv/                          # uv inside the image
+└── docker-compose/                      # Runtime configuration (see docker-compose/Readme.md)
+```
 
-## Environment preparation
+> **Note on roles path:** `ansible/playbooks/roles/` is a symlink to `ansible/roles/`. Always
+> edit files under `ansible/roles/`.
 
-To build the image we must follow these steps:
+---
 
-1. Clone this repository to your workstation.
-2. Go to the root of the repository and run the command `pipenv install`
-3. Enter the Python virtual environment with `pipenv shell`
+## Runtime notes
 
-## Image building
+- The image user is `devops` (UID/GID `1000` at build time).
+- Pass `PUID` and `PGID` at runtime (done automatically by `docker-compose/compose.yml` from the
+  host's `$UID`/`$GID`). Defaults to `1000` if not set.
+- To open a shell: `docker compose exec -u devops devops bash -l`
+- Locale: `es_ES.UTF-8`. Prompt: Starship with `APP_ENV` visible.
+- SSH keys matching `~/.ssh/*ami*` are auto-added to `ssh-agent` on login via `.bashrc`.
 
-Build the image with `task build`
+---
 
-## Development/Maintenance
+## Linting
 
-To maintain or provision software in the image, the tools provided by Packer are used. If you want to test a role or playbook you must use the command `task build:debug`, this way if ansible fails, Packer will ask you what you want to do, you can [a]bort or [r]etry after making the corresponding corrections in the ansible role that fails.
+```shell
+uv run ruff check .
+uv run ruff format .
+```

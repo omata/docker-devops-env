@@ -1,33 +1,104 @@
-# Uso de la imagen con docker compose
+# Uso de la imagen con Docker Compose
 
-Luego de generar la imagen se puede usar del entorno a través de docker compose, mediante la configuración en varios ficheros que luego permitirán levantarlo con parámetros específicos para cada proyecto.
+> Versión en inglés: [Readme.md](Readme.md)
 
-# Configuraciones
+Una vez construida la imagen, puede ejecutarse mediante Docker Compose utilizando los archivos de
+configuración de este directorio. Cada archivo controla un aspecto distinto del comportamiento del
+contenedor.
 
-## Taskfile
+---
 
-En el archivo `docker-compose/Taskfile.yml` se debe establecer la variable `PROJECT` con el nombre del proyecto. Debe ser corto ya que se usará en el prompt dentro del contenedor.
+## Configuración inicial
 
-## Variables de entorno
+### 1. Establecer el nombre del proyecto
 
-En el archivo `docker-compose/my_env_vars.env` se deben establecer las variables de entorno necesarias para poder acceder a la nubes de AWS.
+Edita `Taskfile.yml` y asigna a la variable `PROJECT` un identificador corto para tu proyecto.
+Este nombre se usa como nombre del proyecto Docker Compose (visible en la salida de `docker ps` y
+en el prompt dentro del contenedor).
 
-```shell
-## Environment variables file for Docker Ansible proyects.
-# Defines environment variables for platform context.
-APP_ENV=<nombre del proyecto>
-AWS_ACCESS_KEY_ID=<llave de acceso>
-AWS_SECRET_ACCESS_KEY=<llave de acceso secreta>
-AWS_DEFAULT_REGION=<region de aws>
-TZ=<zona horaria en formato base de datos tz>
+```yaml
+vars:
+  PROJECT: miproyecto
 ```
 
-> NOTA: Estas variables de entorno son necesarias para algunas herramientas como ansible que obtiene estos valores usando este mecanismo.
+### 2. Configurar las variables de entorno
 
-## Docker
+Rellena `my_env_vars.env` con los valores de tu entorno:
 
-En el archivo `docker-compose/compose.yml` se deben establecer los volúmenes necesarios para poder acceder a los proyectos del IaC. En donde el directorio `src` corresponde a un enlace simbólico que apunta al repositorio del proyecto.
+```shell
+# Contexto de plataforma
+APP_ENV=<nombre-del-proyecto>
 
-## Arrancar el contenedor
+# Credenciales AWS
+AWS_ACCESS_KEY_ID=<access-key-id>
+AWS_SECRET_ACCESS_KEY=<secret-access-key>
+AWS_DEFAULT_REGION=<region>          # p. ej. eu-west-1
 
-Para iniciar el contenedor bastará con ejecutar `task up sh` lo que arrancará el contenedor y nos mostrará el prompt de éste.
+# Zona horaria (formato base de datos IANA tz)
+TZ=<zona-horaria>                    # p. ej. Europe/Madrid
+```
+
+> `my_env_vars.env` no se commitea al repositorio. Mantenlo fuera del control de versiones.
+
+### 3. Crear el enlace simbólico `src`
+
+El directorio `src` debe existir como un enlace simbólico que apunte al repositorio de tu proyecto
+IaC:
+
+```shell
+ln -s /ruta/a/tu/proyecto-iac docker-compose/src
+```
+
+Este directorio se monta como `/home/devops/src` dentro del contenedor.
+
+### 4. Crear `config.cnf`
+
+`config.cnf` se monta como el archivo de configuración del cliente SSH (`~/.ssh/config`) dentro
+del contenedor. Créalo (puede estar vacío) o rellénalo con tus alias de host SSH:
+
+```shell
+touch docker-compose/config.cnf
+```
+
+---
+
+## Volúmenes montados
+
+| Ruta en el host | Ruta en el contenedor | Notas |
+|---|---|---|
+| `config.cnf` | `/home/devops/.ssh/config` | Configuración del cliente SSH |
+| `~/.ssh/hiberus/hda/` | `/home/devops/.ssh/hiberus/hda` | Claves SSH (solo lectura) |
+| `~/.ssh/apps` | `/home/devops/.ssh/apps` | Claves SSH (solo lectura) |
+| `src` | `/home/devops/src` | Enlace simbólico al repositorio IaC |
+| `tmp` | `/home/devops/tmp` | Espacio temporal de trabajo |
+
+---
+
+## Tareas disponibles
+
+Ejecuta estos comandos desde el directorio `docker-compose/` (o pasa `-d docker-compose/` a Task).
+
+| Comando | Descripción |
+|---|---|
+| `task up` | Inicia el contenedor en segundo plano |
+| `task sh` | Abre un shell en el contenedor en ejecución |
+| `task up sh` | Flujo habitual: inicia el contenedor y abre un shell |
+| `task down` | Detiene y elimina el contenedor |
+| `task prune` | Detiene, elimina el contenedor y borra los volúmenes asociados |
+| `task restart` | Reinicia todos los contenedores del proyecto |
+| `task restart:cont` | Reinicia un contenedor concreto (por defecto: `devops`; sobreescribe con `CONTAINER=<nombre>`) |
+
+Para abrir un shell manualmente sin Task:
+
+```shell
+docker compose -p <PROJECT> exec -u devops devops bash -l
+```
+
+---
+
+## Remapeo de usuario (PUID / PGID)
+
+`compose.yml` pasa el `$UID` y `$GID` del usuario del host al contenedor como `PUID` y `PGID`.
+El entrypoint remapea el usuario interno `devops` a estos valores para que los archivos creados
+dentro del contenedor sean propiedad de tu usuario del host. No es necesario reconstruir la imagen
+al cambiar de usuario.

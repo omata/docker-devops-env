@@ -6,5 +6,5 @@ base_arch:
   aarch64: 'arm64'
 
 # vars for joe
-joe_pkg_url: "https://github.com/omata/joe/releases/download/{{ release.tag_name }}/linux-{{ base_arch[ansible_architecture] }}.tar.zst"
+joe_pkg_url: "https://github.com/omata/joe/releases/download/{{ joe_release.tag_name }}/linux-{{ base_arch[ansible_architecture | lower] }}.tar.zst"
 joe_default_path: /usr/local/bin/

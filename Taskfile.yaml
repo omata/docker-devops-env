@@ -4,11 +4,8 @@ version: '3'
 
 vars:
   PACKER_FILE: packer/devops.pkr.hcl
-  USERNAME: $USER
-  USER_ID:
-    sh: id -u
-  GROUP_ID:
-    sh: if [ $(uname -s) == "Darwin" ] ; then echo "1000" ; else echo "$(id -g)" ; fi
+  IMAGE_TAG:
+    sh: git describe --tags --exact-match 2>/dev/null || echo "latest"
 
 silent: true
 
@@ -17,14 +14,14 @@ tasks:
     desc: Build the docker image.
     cmds:
       - task: init
-      - packer build -var "username={{.USERNAME}}" -var "uid={{.USER_ID}}" -var "gid={{.GROUP_ID}}" {{.PACKER_FILE}}
+      - uv run packer build -var "image_tag={{.IMAGE_TAG}}" {{.PACKER_FILE}}
 
   build:debug:
     desc: Build the docker image but set packer in debug mode.
     cmds:
       - task: init
-      - packer build -on-error=ask {{.PACKER_FILE}}
+      - uv run packer build -on-error=ask -var "image_tag={{.IMAGE_TAG}}" {{.PACKER_FILE}}
 
   init:
     cmds:
-      - packer init {{.PACKER_FILE}}
+      - uv run packer init {{.PACKER_FILE}}

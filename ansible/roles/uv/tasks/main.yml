@@ -1,0 +1,58 @@
+---
+# file: roles/uv/tasks/main.yml
+
+- name: "Create temporary directory"
+  ansible.builtin.tempfile:
+    state: "directory"
+    prefix: "uv-"
+  register: temp_dir
+
+- name: "Get latest version number of uv"
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/astral-sh/uv/releases/latest"
+    return_content: true
+  register: uv_json
+
+- name: "Set uv release fact"
+  ansible.builtin.set_fact:
+    uv_release: "{{ uv_json.content | from_json }}"
+
+- block:
+    - name: "Download latest version of uv"
+      ansible.builtin.unarchive:
+        src: "{{ uv_pkg_url }}"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
+
+    - name: "Ensure installation path exists"
+      ansible.builtin.file:
+        path: "{{ uv_default_path }}"
+        state: "directory"
+        owner: "devops"
+        group: "devops"
+        mode: "0755"
+
+    - name: "Install uv"
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/uv-{{ ansible_architecture | lower }}-unknown-linux-gnu/uv"
+        dest: "{{ uv_default_path }}"
+        remote_src: true
+        owner: "devops"
+        group: "devops"
+        mode: "0755"
+
+    - name: "Install uvx"
+      ansible.builtin.copy:
+        src: "{{ temp_dir.path }}/uv-{{ ansible_architecture | lower }}-unknown-linux-gnu/uvx"
+        dest: "{{ uv_default_path }}"
+        remote_src: true
+        owner: "devops"
+        group: "devops"
+        mode: "0755"
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined

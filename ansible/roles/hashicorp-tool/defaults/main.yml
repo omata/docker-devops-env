@@ -1,0 +1,5 @@
+---
+# defaults for hashicorp-tool
+
+# Default installation path
+tool_install_path: "/usr/local/bin"
