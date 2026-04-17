@@ -104,8 +104,8 @@ task build
 ## Desarrollo y mantenimiento
 
 Usa `task build:debug` al iterar sobre roles de Ansible. En modo debug, si Ansible falla, Packer
-hace una pausa y muestra el prompt `[a]bort / [r]etry`. Corrige el rol que falla y pulsa `r` para
-reintentar sin tener que reiniciar toda la construcción desde cero.
+hace una pausa y muestra el prompt `[c] Clean up and exit, [a] abort without cleanup, or [r] retry step`.
+Corrige el rol que falla y pulsa `r` para reintentar sin tener que reiniciar toda la construcción desde cero.
 
 ```shell
 task build:debug
@@ -131,9 +131,15 @@ task build:debug
 │       ├── google-cloud-sdk/            # gcloud CLI
 │       ├── hashicorp-tool/              # Rol compartido: Terraform + Packer (dentro de la imagen)
 │       ├── image-config/                # Entrypoint, locale, zona horaria
+│       ├── joe/                         # Editor de texto joe
+│       ├── packer/                      # Packer CLI (dentro de la imagen)
 │       ├── pulumi/                      # Pulumi CLI + completado bash
-│       ├── python-modules/              # Paquetes pip adicionales via uv
+│       ├── python-modules/              # Paquetes Python adicionales via apt + pip --user
+│       ├── required-packages/           # Paquetes base del sistema (apt)
+│       ├── s5cmd/                       # CLI S3 s5cmd
 │       ├── starship/                    # Prompt Starship
+│       ├── taskfile/                    # Ejecutor de tareas (dentro de la imagen)
+│       ├── terraform/                   # Terraform CLI
 │       ├── user-config/                 # Usuario devops, sudoers, .bashrc, .bash_profile
 │       └── uv/                          # uv dentro de la imagen
 └── docker-compose/                      # Configuración de ejecución (ver docker-compose/Léeme.md)
@@ -151,6 +157,8 @@ task build:debug
 - Para abrir un shell: `docker compose exec -u devops devops bash -l`
 - Locale: `es_ES.UTF-8`. Prompt: Starship con `APP_ENV` visible.
 - Las claves SSH que coincidan con `~/.ssh/*ami*` se añaden automáticamente a `ssh-agent` al iniciar sesión a través de `.bashrc`.
+  El entrypoint arranca `ssh-agent` como `devops` con un socket fijo en `/tmp/ssh-agent.sock`
+  antes de ceder el control al shell de login; `.bashrc` establece `SSH_AUTH_SOCK` como fallback.
 
 ---
 

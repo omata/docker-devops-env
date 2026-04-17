@@ -102,8 +102,8 @@ task build
 ## Development and maintenance
 
 Use `task build:debug` when iterating on Ansible roles. In debug mode, if Ansible fails Packer
-pauses and prompts `[a]bort / [r]etry`. Fix the failing role and press `r` to retry without
-restarting the whole build from scratch.
+pauses and prompts `[c] Clean up and exit, [a] abort without cleanup, or [r] retry step`.
+Fix the failing role and press `r` to retry without restarting the whole build from scratch.
 
 ```shell
 task build:debug
@@ -129,9 +129,15 @@ task build:debug
 │       ├── google-cloud-sdk/            # gcloud CLI
 │       ├── hashicorp-tool/              # Shared role: Terraform + Packer (inside image)
 │       ├── image-config/                # Entrypoint, locale, timezone
+│       ├── joe/                         # joe text editor
+│       ├── packer/                      # Packer CLI (inside image)
 │       ├── pulumi/                      # Pulumi CLI + bash completion
-│       ├── python-modules/              # Extra pip packages via uv
+│       ├── python-modules/              # Extra Python packages via apt + pip --user
+│       ├── required-packages/           # Base system packages (apt)
+│       ├── s5cmd/                       # s5cmd S3 CLI
 │       ├── starship/                    # Starship prompt
+│       ├── taskfile/                    # Task runner (inside image)
+│       ├── terraform/                   # Terraform CLI
 │       ├── user-config/                 # devops user, sudoers, .bashrc, .bash_profile
 │       └── uv/                          # uv inside the image
 └── docker-compose/                      # Runtime configuration (see docker-compose/Readme.md)
@@ -151,6 +157,8 @@ task build:debug
 - To open a shell: `docker compose exec -u devops devops bash -l`
 - Locale: `es_ES.UTF-8`. Prompt: Starship with `APP_ENV` visible.
 - SSH keys matching `~/.ssh/*ami*` are auto-added to `ssh-agent` on login via `.bashrc`.
+  The entrypoint starts `ssh-agent` as `devops` with a fixed socket at `/tmp/ssh-agent.sock`
+  before handing off to the login shell; `.bashrc` sets `SSH_AUTH_SOCK` as a fallback.
 
 ---
 
