@@ -6,6 +6,17 @@
 - Commit messages must be written in English, one commit per fix or feature.
 - The user communicates in Spanish; always respond in Spanish.
 
+### Git Flow
+
+This repository uses **git flow** for branch management. All branching, merging, and release operations must be performed through `git flow` commands — never manually merge or create release/hotfix branches by hand.
+
+- **Main branches**: `main` (production) and `develop` (integration).
+- **Feature branches**: created from `develop` with `git flow feature start <name>`, finished with `git flow feature finish <name>`.
+- **Release branches**: created from `develop` with `git flow release start <version>`, finished with `git flow release finish <version>` (merges into both `main` and `develop`, creates a tag).
+- **Hotfix branches**: created from `main` with `git flow hotfix start <version>`, finished with `git flow hotfix finish <version>`.
+- **Never push directly to `main` or `develop`**; always go through the appropriate git flow workflow.
+- When finishing a release or hotfix, git flow will open an editor for the merge commit and the tag message. Accept the defaults unless the user says otherwise.
+
 ---
 
 ## What this repo is
