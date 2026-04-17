@@ -20,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (recommended) and a single shared container for all projects — with directory layout
   examples and guidance on when to choose each approach.
 
+### Fixed
+- Documentation: corrected image tagging description from timestamp (`YYYYMMDD-hhmmss`) to
+  git-based versioning in `Readme.md`, `Léeme.md` and `AGENTS.md`.
+- Documentation: corrected image user from `devops` to `root` (entrypoint requires root for
+  UID/GID remapping before dropping to `devops` via `gosu`) in `Readme.md`, `Léeme.md` and
+  `AGENTS.md`.
+- Documentation: corrected Packer description — it must be installed on the system (added to
+  the prerequisites table and installation section); `uv run` is required so Packer can find
+  the virtualenv's `ansible-playbook`, not because Packer itself is managed by `uv`.
+
 ---
 
 ## [2.0.0] - 2026-04-14
