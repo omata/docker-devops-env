@@ -23,11 +23,11 @@ find "/home/${DEVOPS_USER}" -mount -maxdepth 3 \
     ! -user "${TARGET_UID}" -exec chown "${TARGET_UID}:${TARGET_GID}" {} +
 
 # Clean up stale ssh-agent sockets from previous runs
-rm -rf /tmp/ssh-*
+rm -f /tmp/ssh-agent.sock
 
-# Start ssh-agent in the background; eval exports SSH_AUTH_SOCK and
-# SSH_AGENT_PID into this shell's environment which exec gosu inherits.
-eval "$(ssh-agent -s)" > /dev/null
+# Start ssh-agent as the target user with a fixed socket path so that
+# .bashrc can set SSH_AUTH_SOCK reliably and the socket is owned by devops.
+gosu "${DEVOPS_USER}" ssh-agent -a /tmp/ssh-agent.sock > /dev/null
 
-# Hand off to a login shell as the target user, with ssh-agent env exported
+# Hand off to a login shell as the target user
 exec gosu "${DEVOPS_USER}" /bin/bash -l
