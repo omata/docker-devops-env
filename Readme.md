@@ -10,9 +10,9 @@ Google Cloud SDK, Pulumi, and more), built with **Packer + Ansible** on top of `
 ## How it works
 
 Packer starts a fresh `ubuntu:22.04` container, provisions it with Ansible, and commits the
-result as `devops:latest` (plus a timestamped tag `devops:YYYYMMDD-hhmmss`). There is no
-Dockerfile; the entire image definition lives in `packer/devops.pkr.hcl` and the Ansible roles
-under `ansible/roles/`.
+result as `devops:latest`. When the current commit carries a git tag (e.g. `2.0.0`), the image
+is also tagged as `devops:2.0.0`. There is no Dockerfile; the entire image definition lives in
+`packer/devops.pkr.hcl` and the Ansible roles under `ansible/roles/`.
 
 At runtime the container entrypoint (`/opt/docker-entrypoint.sh`) remaps the internal `devops`
 user (UID/GID `1000`) to whatever `PUID`/`PGID` the host passes in, then hands off execution
@@ -28,12 +28,14 @@ The following tools must be available on your workstation before building the im
 |---|---|
 | **Python 3.10** | Pinned via `.python-version`; managed by `uv` |
 | **uv** | Manages the Python virtualenv and runs Ansible + Packer |
+| **Packer** | Builds the Docker image; must be invoked via `uv run packer` (see note below) |
 | **Task** | Task runner; see [taskfile.dev](https://taskfile.dev/installation/) |
 | **Docker** | Engine must be running |
 
-> **Packer is not installed globally.** It is invoked through `uv run packer`, so it runs inside
-> the project virtualenv where `ansible-playbook` is also available. Do not add a system-wide
-> Packer installation.
+> **Packer must be invoked via `uv run`.** Packer must be installed on the system, but it
+> needs access to the `ansible-playbook` binary managed by the project's `uv` virtualenv. Running
+> `uv run packer` ensures the virtualenv is activated and Packer can find `ansible-playbook` on
+> its PATH.
 
 ---
 
@@ -65,6 +67,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Follow the installation instructions for your platform on the
 [Taskfile installation page](https://taskfile.dev/installation/).
+
+### Packer
+
+Install Packer for your platform from the
+[HashiCorp Packer installation page](https://developer.hashicorp.com/packer/install).
 
 ### Docker
 
@@ -137,7 +144,8 @@ task build:debug
 
 ## Runtime notes
 
-- The image user is `devops` (UID/GID `1000` at build time).
+- The image runs as `root` so the entrypoint can remap UID/GID. The `devops` user (UID/GID
+  `1000` at build time) is the effective user after the entrypoint drops privileges via `gosu`.
 - Pass `PUID` and `PGID` at runtime (done automatically by `docker-compose/compose.yml` from the
   host's `$UID`/`$GID`). Defaults to `1000` if not set.
 - To open a shell: `docker compose exec -u devops devops bash -l`
