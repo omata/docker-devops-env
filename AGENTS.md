@@ -106,9 +106,10 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 4. Create `docker-compose/config.cnf` (SSH client config; may be empty).
 
 Volumes mounted into the container (see `docker-compose/compose.yml`):
+- `~/.aws` → `/home/devops/.aws`
 - `config.cnf` → `/home/devops/.ssh/config`
-- `~/.ssh/hiberus/hda/` → `/home/devops/.ssh/hiberus/hda`
-- `~/.ssh/apps` → `/home/devops/.ssh/apps`
+- `~/.ssh/<path-to-your-keys>` → `/home/devops/.ssh/<path-to-your-keys>` (read-only)
+- `~/.ssh/apps` → `/home/devops/.ssh/apps` (read-only)
 - `./src` → `/home/devops/src`
 - `./tmp` → `/home/devops/tmp`
 

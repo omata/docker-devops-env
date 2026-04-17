@@ -2,9 +2,7 @@
 
 > Versión en inglés: [Readme.md](Readme.md)
 
-Una vez construida la imagen, puede ejecutarse mediante Docker Compose utilizando los archivos de
-configuración de este directorio. Cada archivo controla un aspecto distinto del comportamiento del
-contenedor.
+Una vez construida la imagen, puede ejecutarse mediante Docker Compose utilizando los archivos de configuración de este directorio. Cada archivo controla un aspecto distinto del comportamiento del contenedor.
 
 ---
 
@@ -13,8 +11,7 @@ contenedor.
 ### 1. Establecer el nombre del proyecto
 
 Edita `Taskfile.yml` y asigna a la variable `PROJECT` un identificador corto para tu proyecto.
-Este nombre se usa como nombre del proyecto Docker Compose (visible en la salida de `docker ps` y
-en el prompt dentro del contenedor).
+Este nombre se usa como nombre del proyecto Docker Compose (visible en la salida de `docker ps` y en el prompt dentro del contenedor).
 
 ```yaml
 vars:
@@ -35,14 +32,11 @@ TZ=<zona-horaria>                    # p. ej. Europe/Madrid
 
 > `my_env_vars.env` no se commitea al repositorio. Mantenlo fuera del control de versiones.
 >
-> Las credenciales AWS **no** se definen aqui. Utiliza los mecanismos estandar de AWS
-> (`~/.aws/credentials`, `AWS_PROFILE`, roles IAM, etc.) y montalos en el contenedor
-> si es necesario.
+> Las credenciales AWS **no** se definen aquí. Utiliza los mecanismos estándar de AWS (`~/.aws/credentials`, `AWS_PROFILE`, roles IAM, etc.) y móntalos en el contenedor si es necesario.
 
 ### 3. Crear el enlace simbólico `src`
 
-El directorio `src` debe existir como un enlace simbólico que apunte al repositorio de tu proyecto
-IaC:
+El directorio `src` debe existir como un enlace simbólico que apunte al repositorio de tu proyecto IaC:
 
 ```shell
 ln -s /ruta/a/tu/proyecto-iac docker-compose/src
@@ -52,8 +46,7 @@ Este directorio se monta como `/home/devops/src` dentro del contenedor.
 
 ### 4. Crear `config.cnf`
 
-`config.cnf` se monta como el archivo de configuración del cliente SSH (`~/.ssh/config`) dentro
-del contenedor. Créalo (puede estar vacío) o rellénalo con tus alias de host SSH:
+`config.cnf` se monta como el archivo de configuración del cliente SSH (`~/.ssh/config`) dentro del contenedor. Créalo (puede estar vacío) o rellénalo con tus alias de host SSH:
 
 ```shell
 touch docker-compose/config.cnf
@@ -63,14 +56,11 @@ touch docker-compose/config.cnf
 
 ## Modos de uso
 
-La imagen puede utilizarse de dos formas en funcion del flujo de trabajo:
+La imagen puede utilizarse de dos formas en función del flujo de trabajo:
 
 ### A) Un contenedor por proyecto (recomendado)
 
-Cada proyecto IaC tiene su propia copia del directorio `docker-compose/` (o un enlace simbolico)
-con su propio `Taskfile.yml`, `my_env_vars.env` y enlace simbolico `src`. Esto proporciona
-aislamiento total: variables de entorno, configuracion SSH y espacio temporal independientes por
-proyecto.
+Cada proyecto IaC tiene su propia copia del directorio `docker-compose/` (o un enlace simbólico) con su propio `Taskfile.yml`, `my_env_vars.env` y enlace simbólico `src`. Esto proporciona aislamiento total: variables de entorno, configuración SSH y espacio temporal independientes por proyecto.
 
 ```
 ~/proyectos/
@@ -99,11 +89,9 @@ cd ~/compose/alfa && task up sh   # entrar en el contenedor alfa
 cd ~/compose/beta && task up sh   # entrar en el contenedor beta
 ```
 
-### B) Un unico contenedor para todos los proyectos
+### B) Un único contenedor para todos los proyectos
 
-Una sola instancia de `docker-compose/` sirve a todos los proyectos. El enlace simbolico `src`
-apunta al directorio padre que contiene todos los repos IaC, o se montan repos individuales como
-volumenes adicionales en `compose.yml`.
+Una sola instancia de `docker-compose/` sirve a todos los proyectos. El enlace simbólico `src` apunta al directorio padre que contiene todos los repos IaC, o se montan repos individuales como volúmenes adicionales en `compose.yml`.
 
 ```
 ~/proyectos/
@@ -117,14 +105,14 @@ docker-compose/
   config.cnf
 ```
 
-Dentro del contenedor, todos los proyectos estan disponibles bajo `/home/devops/src/`:
+Dentro del contenedor, todos los proyectos están disponibles bajo `/home/devops/src/`:
 
 ```shell
 cd ~/src/proyecto-alfa
 cd ~/src/proyecto-beta
 ```
 
-Alternativamente, se pueden anadir montajes adicionales en `compose.yml`:
+Alternativamente, se pueden añadir montajes adicionales en `compose.yml`:
 
 ```yaml
 volumes:
@@ -132,18 +120,17 @@ volumes:
   - ~/proyectos/proyecto-beta:/home/devops/beta
 ```
 
-> Elige **un contenedor por proyecto** cuando los proyectos necesiten distintas variables de
-> entorno, claves SSH o perfiles AWS. Elige **un unico contenedor** cuando los proyectos
-> compartan la misma configuracion y prefieras cambiar entre ellos sin salir del shell.
+> Elige **un contenedor por proyecto** cuando los proyectos necesiten distintas variables de entorno, claves SSH o perfiles AWS. Elige **un único contenedor** cuando los proyectos compartan la misma configuración y prefieras cambiar entre ellos sin salir del shell.
 
 ---
 
-## Volumenes montados
+## Volúmenes montados
 
 | Ruta en el host | Ruta en el contenedor | Notas |
 |---|---|---|
+| `~/.aws` | `/home/devops/.aws` | Credenciales y configuración AWS |
 | `config.cnf` | `/home/devops/.ssh/config` | Configuración del cliente SSH |
-| `~/.ssh/hiberus/hda/` | `/home/devops/.ssh/hiberus/hda` | Claves SSH (solo lectura) |
+| `~/.ssh/<ruta-a-tus-claves>` | `/home/devops/.ssh/<ruta-a-tus-claves>` | Claves SSH (solo lectura); ajustar según tu entorno |
 | `~/.ssh/apps` | `/home/devops/.ssh/apps` | Claves SSH (solo lectura) |
 | `src` | `/home/devops/src` | Enlace simbólico al repositorio IaC |
 | `tmp` | `/home/devops/tmp` | Espacio temporal de trabajo |
@@ -162,7 +149,7 @@ Ejecuta estos comandos desde el directorio `docker-compose/` (o pasa `-d docker-
 | `task down` | Detiene y elimina el contenedor |
 | `task prune` | Detiene, elimina el contenedor y borra los volúmenes asociados |
 | `task restart` | Reinicia todos los contenedores del proyecto |
-| `task restart:cont` | Reinicia un contenedor concreto (por defecto: `devops`; sobreescribe con `CONTAINER=<nombre>`) |
+| `task restart:cont` | Reinicia un contenedor concreto (por defecto: `devops`; sobrescribe con `CONTAINER=<nombre>`) |
 
 Para abrir un shell manualmente sin Task:
 
@@ -175,6 +162,4 @@ docker compose -p <PROJECT> exec -u devops devops bash -l
 ## Remapeo de usuario (PUID / PGID)
 
 `compose.yml` pasa el `$UID` y `$GID` del usuario del host al contenedor como `PUID` y `PGID`.
-El entrypoint remapea el usuario interno `devops` a estos valores para que los archivos creados
-dentro del contenedor sean propiedad de tu usuario del host. No es necesario reconstruir la imagen
-al cambiar de usuario.
+El entrypoint remapea el usuario interno `devops` a estos valores para que los archivos creados dentro del contenedor sean propiedad de tu usuario del host. No es necesario reconstruir la imagen al cambiar de usuario.

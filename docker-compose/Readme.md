@@ -139,8 +139,9 @@ volumes:
 
 | Host path | Container path | Notes |
 |---|---|---|
+| `~/.aws` | `/home/devops/.aws` | AWS credentials and configuration |
 | `config.cnf` | `/home/devops/.ssh/config` | SSH client config |
-| `~/.ssh/hiberus/hda/` | `/home/devops/.ssh/hiberus/hda` | Read-only SSH keys |
+| `~/.ssh/<path-to-your-keys>` | `/home/devops/.ssh/<path-to-your-keys>` | Read-only SSH keys; adjust to your environment |
 | `~/.ssh/apps` | `/home/devops/.ssh/apps` | Read-only SSH keys |
 | `src` | `/home/devops/src` | Symlink to the IaC project repo |
 | `tmp` | `/home/devops/tmp` | Scratch space |
