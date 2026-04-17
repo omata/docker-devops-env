@@ -92,7 +92,7 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 ## Container entrypoint and user
 
 - Image user: `root` (required by the entrypoint for UID/GID remapping; drops to `devops` via `gosu`). The `devops` user is created at build time with UID/GID `1000`.
-- Entrypoint: `/opt/docker-entrypoint.sh` — remaps UID/GID from `PUID`/`PGID`, fixes home ownership, starts `ssh-agent`, then `exec gosu devops bash -l`.
+- Entrypoint: `/opt/docker-entrypoint.sh` — remaps UID/GID from `PUID`/`PGID`, fixes home ownership, starts `ssh-agent`, then `exec gosu devops /bin/bash -l`.
 - SSH keys matching `~/.ssh/*ami*` are auto-added to the agent via `.bashrc`.
 - Locale: `es_ES.UTF-8`. Prompt: Starship with `APP_ENV` visible.
 
@@ -139,6 +139,6 @@ No CI, no pre-commit hooks configured.
 | `ansible/roles/user-config/` | Creates `devops` user, locale, sudoers |
 | `docker-compose/compose.yml` | Service definition; sets PUID/PGID from host |
 | `docker-compose/Taskfile.yml` | Tasks for managing the running container |
-| `pyproject.toml` | Python deps (ansible, ruff) managed by uv |
+| `pyproject.toml` | Python deps (ansible, certifi, ruff) managed by uv |
 | `.python-version` | Pins Python to 3.10 |
 | `.env` | Sets `WORKON_HOME` and `SYSTEM_VERSION_COMPAT=0` for uv |
