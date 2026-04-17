@@ -29,6 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation: corrected Packer description — it must be installed on the system (added to
   the prerequisites table and installation section); `uv run` is required so Packer can find
   the virtualenv's `ansible-playbook`, not because Packer itself is managed by `uv`.
+- Documentation: added 6 missing roles to the project layout tree in `Readme.md` and
+  `Léeme.md` (`joe/`, `packer/`, `required-packages/`, `s5cmd/`, `taskfile/`, `terraform/`).
+- Documentation: corrected `python-modules` role description from "via uv" to "via apt +
+  pip --user" in `Readme.md` and `Léeme.md`.
+- Documentation: corrected `task build:debug` prompt text to the exact string shown by Packer:
+  `[c] Clean up and exit, [a] abort without cleanup, or [r] retry step`. The previous text
+  (`[a]bort / [r]etry / [c]lean-up`) was not the real prompt.
+- Documentation: added `certifi` to the `pyproject.toml` entry in the AGENTS.md key files
+  table.
+- Documentation: corrected `my_env_vars.env` status — it is versioned as a template with
+  example values; personal/secret copies should be kept out of VCS. Updated
+  `docker-compose/Readme.md` and `docker-compose/Léeme.md`.
+- Documentation: replaced `TZ=<timezone>` placeholder with `TZ=Europe/Madrid` (default value)
+  in `docker-compose/Readme.md` and `docker-compose/Léeme.md`.
+- Documentation: expanded ssh-agent runtime note in `Readme.md` and `Léeme.md` to clarify
+  that the entrypoint starts `ssh-agent` as `devops` with a fixed socket at
+  `/tmp/ssh-agent.sock`; `.bashrc` sets `SSH_AUTH_SOCK` only as a fallback.
+- Documentation: corrected `exec gosu devops bash -l` to `exec gosu devops /bin/bash -l`
+  (absolute path) in `AGENTS.md`.
 
 ---
 
