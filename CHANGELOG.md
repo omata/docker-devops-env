@@ -7,7 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [2.0.1] - 2026-04-20
+
+### Changed
+- Removed `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_DEFAULT_REGION` from
+  `docker-compose/my_env_vars.env`. AWS credentials should be provided through the standard
+  AWS mechanisms (`~/.aws/credentials`, `AWS_PROFILE`, IAM roles, etc.).
+
+### Added
+- Documentation: "Usage patterns" section added to `docker-compose/Readme.md` and
+  `docker-compose/Léeme.md` describing two deployment models — one container per project
+  (recommended) and a single shared container for all projects — with directory layout
+  examples and guidance on when to choose each approach.
+
+### Fixed
+- Documentation: corrected image tagging description from timestamp (`YYYYMMDD-hhmmss`) to
+  git-based versioning in `Readme.md`, `Léeme.md` and `AGENTS.md`.
+- Documentation: corrected image user from `devops` to `root` (entrypoint requires root for
+  UID/GID remapping before dropping to `devops` via `gosu`) in `Readme.md`, `Léeme.md` and
+  `AGENTS.md`.
+- Documentation: corrected Packer description — it must be installed on the system (added to
+  the prerequisites table and installation section); `uv run` is required so Packer can find
+  the virtualenv's `ansible-playbook`, not because Packer itself is managed by `uv`.
+- Documentation: added 6 missing roles to the project layout tree in `Readme.md` and
+  `Léeme.md` (`joe/`, `packer/`, `required-packages/`, `s5cmd/`, `taskfile/`, `terraform/`).
+- Documentation: corrected `python-modules` role description from "via uv" to "via apt +
+  pip --user" in `Readme.md` and `Léeme.md`.
+- Documentation: corrected `task build:debug` prompt text to the exact string shown by Packer:
+  `[c] Clean up and exit, [a] abort without cleanup, or [r] retry step`. The previous text
+  (`[a]bort / [r]etry / [c]lean-up`) was not the real prompt.
+- Documentation: added `certifi` to the `pyproject.toml` entry in the AGENTS.md key files
+  table.
+- Documentation: corrected `my_env_vars.env` status — it is versioned as a template with
+  example values; personal/secret copies should be kept out of VCS. Updated
+  `docker-compose/Readme.md` and `docker-compose/Léeme.md`.
+- Documentation: replaced `TZ=<timezone>` placeholder with `TZ=Europe/Madrid` (default value)
+  in `docker-compose/Readme.md` and `docker-compose/Léeme.md`.
+- Documentation: expanded ssh-agent runtime note in `Readme.md` and `Léeme.md` to clarify
+  that the entrypoint starts `ssh-agent` as `devops` with a fixed socket at
+  `/tmp/ssh-agent.sock`; `.bashrc` sets `SSH_AUTH_SOCK` only as a fallback.
+- Documentation: corrected `exec gosu devops bash -l` to `exec gosu devops /bin/bash -l`
+  (absolute path) in `AGENTS.md`.
 
 ---
 
@@ -205,7 +245,8 @@ Initial release.
 - `Taskfile.yaml` root task runner with `build`, `build:debug`, and `init` tasks.
 - `pyproject.toml` with `ansible` and `ruff` dependencies managed by `uv`.
 
-[Unreleased]: https://github.com/your-org/devops/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/your-org/devops/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/your-org/devops/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/your-org/devops/compare/v1.0.4...v2.0.0
 [1.1.0]: https://github.com/your-org/devops/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/your-org/devops/compare/v1.0.3...v1.0.4

@@ -59,7 +59,7 @@ task restart:cont # restart specific container (var CONTAINER, default: devops)
 `ansible-playbook` lives in the uv virtualenv, not globally. Packer's Ansible plugin needs it on PATH. The `task build` command does this automatically via `Taskfile.yaml`. If invoking Packer manually, always prefix with `uv run`.
 
 ### Not a Dockerfile
-Packer starts a `ubuntu:22.04` container, provisions it with Ansible, then commits it as `devops:latest` + `devops:YYYYMMDD-hhmmss`. Do not add a `Dockerfile` unless the build strategy changes.
+Packer starts a `ubuntu:22.04` container, provisions it with Ansible, then commits it as `devops:latest`. When the current commit carries a git tag, the image is also tagged with that version (e.g. `devops:2.0.0`). Do not add a `Dockerfile` unless the build strategy changes.
 
 ### Build is user-agnostic; runtime remapping via PUID/PGID
 The image is built with a fixed generic user `devops` (UID/GID `1000`). No host user data is baked into the image. At container startup, `docker-entrypoint.sh` reads `PUID` and `PGID` env vars (set automatically by `compose.yml` from the host's `$UID`/`$GID`) and remaps the `devops` user via `usermod`/`groupmod` before handing off to `gosu devops bash -l`. This means the same image works for any host user without rebuilding.
@@ -91,8 +91,8 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 
 ## Container entrypoint and user
 
-- Image user: `devops` (UID/GID `1000`, fixed at build time).
-- Entrypoint: `/opt/docker-entrypoint.sh` — remaps UID/GID from `PUID`/`PGID`, fixes home ownership, starts `ssh-agent`, then `exec gosu devops bash -l`.
+- Image user: `root` (required by the entrypoint for UID/GID remapping; drops to `devops` via `gosu`). The `devops` user is created at build time with UID/GID `1000`.
+- Entrypoint: `/opt/docker-entrypoint.sh` — remaps UID/GID from `PUID`/`PGID`, fixes home ownership, starts `ssh-agent`, then `exec gosu devops /bin/bash -l`.
 - SSH keys matching `~/.ssh/*ami*` are auto-added to the agent via `.bashrc`.
 - Locale: `es_ES.UTF-8`. Prompt: Starship with `APP_ENV` visible.
 
@@ -101,14 +101,15 @@ All roles contain `x86_64`/`amd64` and `aarch64`/`arm64` mappings. When adding a
 ## Required setup before using `docker-compose/`
 
 1. Edit `PROJECT` var in `docker-compose/Taskfile.yml`.
-2. Fill in `docker-compose/my_env_vars.env` (AWS keys, `APP_ENV`, `TZ`).
+2. Fill in `docker-compose/my_env_vars.env` (`APP_ENV`, `TZ`).
 3. Create `docker-compose/src` as a symlink to the IaC project repo.
 4. Create `docker-compose/config.cnf` (SSH client config; may be empty).
 
 Volumes mounted into the container (see `docker-compose/compose.yml`):
+- `~/.aws` → `/home/devops/.aws`
 - `config.cnf` → `/home/devops/.ssh/config`
-- `~/.ssh/hiberus/hda/` → `/home/devops/.ssh/hiberus/hda`
-- `~/.ssh/apps` → `/home/devops/.ssh/apps`
+- `~/.ssh/<path-to-your-keys>` → `/home/devops/.ssh/<path-to-your-keys>` (read-only)
+- `~/.ssh/apps` → `/home/devops/.ssh/apps` (read-only)
 - `./src` → `/home/devops/src`
 - `./tmp` → `/home/devops/tmp`
 
@@ -138,6 +139,6 @@ No CI, no pre-commit hooks configured.
 | `ansible/roles/user-config/` | Creates `devops` user, locale, sudoers |
 | `docker-compose/compose.yml` | Service definition; sets PUID/PGID from host |
 | `docker-compose/Taskfile.yml` | Tasks for managing the running container |
-| `pyproject.toml` | Python deps (ansible, ruff) managed by uv |
+| `pyproject.toml` | Python deps (ansible, certifi, ruff) managed by uv |
 | `.python-version` | Pins Python to 3.10 |
 | `.env` | Sets `WORKON_HOME` and `SYSTEM_VERSION_COMPAT=0` for uv |
