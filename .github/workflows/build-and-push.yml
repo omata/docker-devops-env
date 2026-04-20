@@ -1,0 +1,69 @@
+name: Build and push Docker image to GHCR
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for git describe --tags
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Python dependencies (Ansible)
+        run: uv sync
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: latest
+
+      - name: Download Packer plugins
+        run: uv run packer init packer/devops.pkr.hcl
+
+      - name: Compute image tag
+        id: tag
+        run: |
+          IMAGE_TAG=$(git describe --tags --exact-match 2>/dev/null || echo "latest")
+          echo "value=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "is_release=$( [ "${IMAGE_TAG}" != 'latest' ] && echo 'true' || echo 'false' )" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image with Packer
+        run: uv run packer build -var "image_tag=${{ steps.tag.outputs.value }}" packer/devops.pkr.hcl
+
+      - name: Tag image for GHCR (versioned)
+        if: steps.tag.outputs.is_release == 'true'
+        run: docker tag devops:${{ steps.tag.outputs.value }} ghcr.io/${{ github.repository_owner }}/docker-devops-env:${{ steps.tag.outputs.value }}
+
+      - name: Tag image for GHCR (latest)
+        run: docker tag devops:latest ghcr.io/${{ github.repository_owner }}/docker-devops-env:latest
+
+      - name: Push versioned tag to GHCR
+        if: steps.tag.outputs.is_release == 'true'
+        run: docker push ghcr.io/${{ github.repository_owner }}/docker-devops-env:${{ steps.tag.outputs.value }}
+
+      - name: Push latest tag to GHCR
+        run: docker push ghcr.io/${{ github.repository_owner }}/docker-devops-env:latest
