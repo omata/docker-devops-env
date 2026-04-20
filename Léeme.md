@@ -10,9 +10,9 @@ AWS CLI, Google Cloud SDK, Pulumi y más), construida con **Packer + Ansible** s
 ## Cómo funciona
 
 Packer arranca un contenedor `ubuntu:22.04` limpio, lo provisiona con Ansible y hace commit del
-resultado como `devops:latest` (más una etiqueta con marca temporal `devops:YYYYMMDD-hhmmss`). No
-existe Dockerfile; la definición completa de la imagen vive en `packer/devops.pkr.hcl` y en los
-roles de Ansible bajo `ansible/roles/`.
+resultado como `devops:latest`. Cuando el commit actual lleva un tag git (p. ej. `2.0.0`), la
+imagen tambien se etiqueta como `devops:2.0.0`. No existe Dockerfile; la definicion completa de
+la imagen vive en `packer/devops.pkr.hcl` y en los roles de Ansible bajo `ansible/roles/`.
 
 En tiempo de ejecución, el entrypoint del contenedor (`/opt/docker-entrypoint.sh`) remapea el
 usuario interno `devops` (UID/GID `1000`) al `PUID`/`PGID` que el host pasa como variable de
@@ -30,12 +30,14 @@ la imagen.
 |---|---|
 | **Python 3.10** | Fijado en `.python-version`; gestionado por `uv` |
 | **uv** | Gestiona el virtualenv de Python y ejecuta Ansible + Packer |
+| **Packer** | Construye la imagen Docker; debe invocarse via `uv run packer` (ver nota debajo) |
 | **Task** | Ejecutor de tareas; ver [taskfile.dev](https://taskfile.dev/installation/) |
-| **Docker** | El motor debe estar en ejecución |
+| **Docker** | El motor debe estar en ejecucion |
 
-> **Packer no se instala de forma global.** Se invoca mediante `uv run packer`, de modo que
-> corre dentro del virtualenv del proyecto donde también está disponible `ansible-playbook`. No
-> añadas una instalación de Packer a nivel de sistema.
+> **Packer debe invocarse mediante `uv run`.** Packer debe estar instalado en el sistema, pero
+> necesita acceder al binario `ansible-playbook` gestionado por el virtualenv de `uv` del
+> proyecto. Ejecutar `uv run packer` garantiza que el virtualenv esta activado y que Packer puede
+> encontrar `ansible-playbook` en su PATH.
 
 ---
 
@@ -68,6 +70,11 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Sigue las instrucciones de instalación para tu plataforma en la
 [página de instalación de Taskfile](https://taskfile.dev/installation/).
 
+### Packer
+
+Instala Packer para tu plataforma desde la
+[pagina de instalacion de HashiCorp Packer](https://developer.hashicorp.com/packer/install).
+
 ### Docker
 
 Instala Docker Desktop (macOS/Windows) o Docker Engine (Linux) desde
@@ -97,8 +104,8 @@ task build
 ## Desarrollo y mantenimiento
 
 Usa `task build:debug` al iterar sobre roles de Ansible. En modo debug, si Ansible falla, Packer
-hace una pausa y muestra el prompt `[a]bort / [r]etry`. Corrige el rol que falla y pulsa `r` para
-reintentar sin tener que reiniciar toda la construcción desde cero.
+hace una pausa y muestra el prompt `[c] Clean up and exit, [a] abort without cleanup, or [r] retry step`.
+Corrige el rol que falla y pulsa `r` para reintentar sin tener que reiniciar toda la construcción desde cero.
 
 ```shell
 task build:debug
@@ -124,9 +131,15 @@ task build:debug
 │       ├── google-cloud-sdk/            # gcloud CLI
 │       ├── hashicorp-tool/              # Rol compartido: Terraform + Packer (dentro de la imagen)
 │       ├── image-config/                # Entrypoint, locale, zona horaria
+│       ├── joe/                         # Editor de texto joe
+│       ├── packer/                      # Packer CLI (dentro de la imagen)
 │       ├── pulumi/                      # Pulumi CLI + completado bash
-│       ├── python-modules/              # Paquetes pip adicionales via uv
+│       ├── python-modules/              # Paquetes Python adicionales via apt + pip --user
+│       ├── required-packages/           # Paquetes base del sistema (apt)
+│       ├── s5cmd/                       # CLI S3 s5cmd
 │       ├── starship/                    # Prompt Starship
+│       ├── taskfile/                    # Ejecutor de tareas (dentro de la imagen)
+│       ├── terraform/                   # Terraform CLI
 │       ├── user-config/                 # Usuario devops, sudoers, .bashrc, .bash_profile
 │       └── uv/                          # uv dentro de la imagen
 └── docker-compose/                      # Configuración de ejecución (ver docker-compose/Léeme.md)
@@ -139,13 +152,13 @@ task build:debug
 
 ## Notas de ejecución
 
-- El usuario de la imagen es `devops` (UID/GID `1000` en tiempo de construcción).
-- Pasa `PUID` y `PGID` en tiempo de ejecución (lo hace automáticamente `docker-compose/compose.yml`
-  a partir del `$UID`/`$GID` del host). Por defecto es `1000` si no se especifican.
+- La imagen se ejecuta como `root` para que el entrypoint pueda remapear UID/GID. El usuario `devops` (UID/GID `1000` en tiempo de construccion) es el usuario efectivo despues de que el   entrypoint ceda privilegios via `gosu`.
+- Pasa `PUID` y `PGID` en tiempo de ejecución (lo hace automáticamente `docker-compose/compose.yml` a partir del `$UID`/`$GID` del host). Por defecto es `1000` si no se especifican.
 - Para abrir un shell: `docker compose exec -u devops devops bash -l`
 - Locale: `es_ES.UTF-8`. Prompt: Starship con `APP_ENV` visible.
-- Las claves SSH que coincidan con `~/.ssh/*ami*` se añaden automáticamente a `ssh-agent` al
-  iniciar sesión a través de `.bashrc`.
+- Las claves SSH que coincidan con `~/.ssh/*ami*` se añaden automáticamente a `ssh-agent` al iniciar sesión a través de `.bashrc`.
+  El entrypoint arranca `ssh-agent` como `devops` con un socket fijo en `/tmp/ssh-agent.sock`
+  antes de ceder el control al shell de login; `.bashrc` establece `SSH_AUTH_SOCK` como fallback.
 
 ---
 
