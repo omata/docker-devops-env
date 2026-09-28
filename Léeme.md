@@ -1,7 +1,7 @@
 # Imagen de herramientas DevOps
 
 Imagen Docker con un conjunto curado de herramientas IaC/DevOps (Terraform, Packer, Ansible,
-AWS CLI, Google Cloud SDK, Pulumi y más), construida con **Packer + Ansible** sobre `ubuntu:22.04`.
+AWS CLI, Google Cloud CLI, Pulumi y más), construida con **Packer + Ansible** sobre `ubuntu:22.04`.
 
 > Versión en inglés: [Readme.md](Readme.md)
 
@@ -128,7 +128,7 @@ task build:debug
 │       ├── ansible/                     # Instala Ansible 7 + colección AWS
 │       ├── awscli2/                     # AWS CLI v2
 │       ├── clean-up/                    # Elimina artefactos de construcción
-│       ├── google-cloud-sdk/            # gcloud CLI
+│       ├── google-cloud-cli/            # gcloud CLI
 │       ├── hashicorp-tool/              # Rol compartido: Terraform + Packer (dentro de la imagen)
 │       ├── image-config/                # Entrypoint, locale, zona horaria
 │       ├── joe/                         # Editor de texto joe

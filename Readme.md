@@ -1,7 +1,7 @@
 # DevOps tooling image
 
 Docker image providing a curated set of IaC/DevOps tools (Terraform, Packer, Ansible, AWS CLI,
-Google Cloud SDK, Pulumi, and more), built with **Packer + Ansible** on top of `ubuntu:22.04`.
+Google Cloud CLI, Pulumi, and more), built with **Packer + Ansible** on top of `ubuntu:22.04`.
 
 > Spanish version: [Léeme.md](Léeme.md)
 
@@ -126,7 +126,7 @@ task build:debug
 │       ├── ansible/                     # Installs Ansible 7 + AWS collection
 │       ├── awscli2/                     # AWS CLI v2
 │       ├── clean-up/                    # Removes build artefacts
-│       ├── google-cloud-sdk/            # gcloud CLI
+│       ├── google-cloud-cli/            # gcloud CLI
 │       ├── hashicorp-tool/              # Shared role: Terraform + Packer (inside image)
 │       ├── image-config/                # Entrypoint, locale, timezone
 │       ├── joe/                         # joe text editor

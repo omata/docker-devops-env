@@ -7,34 +7,34 @@
   register: temp_dir
 
 - block:
-    - name: "Download Google Cloud SDK repository key"
+    - name: "Download Google Cloud CLI repository key"
       ansible.builtin.get_url:
         url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-        dest: "{{ temp_dir.path }}/google-cloud-sdk.asc"
+        dest: "{{ temp_dir.path }}/google-cloud-cli.asc"
         mode: "0644"
         force: true
 
     - name: "Convert key to binary GPG format"
       ansible.builtin.command:
-        cmd: "gpg --dearmor -o /etc/apt/trusted.gpg.d/google-cloud-sdk.gpg {{ temp_dir.path }}/google-cloud-sdk.asc"
-        creates: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+        cmd: "gpg --dearmor -o /etc/apt/trusted.gpg.d/google-cloud-cli.gpg {{ temp_dir.path }}/google-cloud-cli.asc"
+        creates: "/etc/apt/trusted.gpg.d/google-cloud-cli.gpg"
 
     - name: "Set permissions on keyring file"
       ansible.builtin.file:
-        path: "/etc/apt/trusted.gpg.d/google-cloud-sdk.gpg"
+        path: "/etc/apt/trusted.gpg.d/google-cloud-cli.gpg"
         owner: "root"
         group: "root"
         mode: "0644"
 
-    - name: "Configure Google Cloud SDK repository"
+    - name: "Configure Google Cloud CLI repository"
       ansible.builtin.apt_repository:
         repo: "{{ gcp_cli_ppa_url }}"
         state: "present"
 
-    - name: "Install Google Cloud SDK"
+    - name: "Install Google Cloud CLI"
       ansible.builtin.apt:
         name:
-          - "google-cloud-sdk"
+          - "google-cloud-cli"
         state: "present"
         update_cache: true
 
