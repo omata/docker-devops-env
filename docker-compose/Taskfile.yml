@@ -11,6 +11,14 @@ vars:
 tasks:
   up:
     desc: Crea el proyecto de Docker compose.
+    vars:
+      # GID del grupo propietario del socket de Docker del host — no se puede hornear en la
+      # imagen porque varía de una máquina a otra. `stat -c` es sintaxis GNU (Linux/WSL2); en
+      # macOS nativo `stat` es BSD y usa `-f`, de ahí el fallback.
+      DOCKER_GID:
+        sh: stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock
+    env:
+      DOCKER_GID: "{{.DOCKER_GID}}"
     cmds:
       - docker compose -p {{.PROJECT}} up -d
 
@@ -32,7 +40,7 @@ tasks:
   sh:
     desc: Abre un shell en el contenedor predeterminado o al especificado utilizando la variable CONTAINER.
     cmds:
-      - docker compose -p {{.PROJECT}} exec -u devops {{.CONTAINER}} bash -l
+      - docker compose -p {{.PROJECT}} exec {{.CONTAINER}} bash -l && exit 0
 
   prune:
     desc: Destruye el entorno de Docker compose incluyendo los volúmenes asociados a los contenedores, si hubiere alguno.

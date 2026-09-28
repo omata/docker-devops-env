@@ -135,6 +135,9 @@ volumes:
 | `~/.ssh/apps` | `/home/devops/.ssh/apps` | Claves SSH (solo lectura) |
 | `src` | `/home/devops/src` | Enlace simbólico al repositorio IaC |
 | `tmp` | `/home/devops/tmp` | Espacio temporal de trabajo |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Socket de Docker del host (Docker-outside-of-Docker) |
+
+> El contenedor trae el cliente de Docker pero no un daemon propio (Docker-outside-of-Docker): habla con el daemon de Docker del **host** a través de `/var/run/docker.sock`, montado automáticamente por `compose.yml`. Esto es lo que permite que herramientas ejecutadas dentro del contenedor —como Molecule, cuando los escenarios de un proyecto usan el driver `docker`— creen sus propios contenedores desechables. `task up` resuelve por su cuenta el GID del grupo dueño del socket del host (`Taskfile.yml`), así que no hace falta ningún paso manual más allá de tener Docker instalado y corriendo en el host.
 
 ---
 

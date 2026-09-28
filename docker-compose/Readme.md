@@ -138,6 +138,9 @@ volumes:
 | `~/.ssh/apps` | `/home/devops/.ssh/apps` | Read-only SSH keys |
 | `src` | `/home/devops/src` | Symlink to the IaC project repo |
 | `tmp` | `/home/devops/tmp` | Scratch space |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Host's Docker socket (Docker-outside-of-Docker) |
+
+> The container ships the Docker CLI but no daemon of its own (Docker-outside-of-Docker): it talks to the **host's** Docker daemon through `/var/run/docker.sock`, mounted automatically by `compose.yml`. This is what lets tools run from inside the container — such as Molecule, when a project's scenarios use the `docker` driver — create their own throwaway containers. `task up` resolves the host socket's group GID on its own (`Taskfile.yml`), so no manual step is needed beyond having Docker installed and running on the host.
 
 ---
 

@@ -15,6 +15,15 @@ services:
       - ${HOME}/.ssh/apps:/home/devops/.ssh/apps:ro
       - ${PWD}/src:/home/devops/src  # Where src is the folder with IaC repositorie
       - ${PWD}/tmp:/home/devops/tmp
+      # Docker-outside-of-Docker: the container has the docker CLI (docker-cli role) but no
+      # daemon of its own — it talks to the host's dockerd through its socket. This is what lets
+      # tools like Molecule create their throwaway test containers from inside this container.
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      # Grants socket access without needing the container user in sudoers for docker commands.
+      # DOCKER_GID is resolved per host at `task up` time (docker-compose/Taskfile.yml) since the
+      # host's docker group GID isn't something that can be baked into the image.
+      - "${DOCKER_GID}"
     env_file: my_env_vars.env
     ulimits:
       nproc: 65535
