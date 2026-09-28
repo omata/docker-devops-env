@@ -1,0 +1,49 @@
+---
+# Client only — no dockerd/containerd inside the image. This container talks to the host's
+# Docker daemon over the socket mounted by docker-compose/compose.yml (Docker-outside-of-Docker),
+# it never runs its own.
+
+- name: "Create temporary directory"
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "docker-cli-"
+  register: temp_dir
+
+- block:
+    - name: "Download Docker repository key"
+      ansible.builtin.get_url:
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        dest: "{{ temp_dir.path }}/docker.asc"
+        mode: "0644"
+        force: true
+
+    - name: "Convert key to binary GPG format"
+      ansible.builtin.command:
+        cmd: "gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg {{ temp_dir.path }}/docker.asc"
+        creates: "/etc/apt/trusted.gpg.d/docker.gpg"
+
+    - name: "Set permissions on keyring file"
+      ansible.builtin.file:
+        path: "/etc/apt/trusted.gpg.d/docker.gpg"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
+    - name: "Configure Docker apt repository"
+      ansible.builtin.apt_repository:
+        repo: "{{ docker_cli_ppa_url }}"
+        state: "present"
+
+    - name: "Install Docker CLI"
+      ansible.builtin.apt:
+        name:
+          - "docker-ce-cli"
+        state: "present"
+        update_cache: true
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined

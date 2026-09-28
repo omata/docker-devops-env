@@ -1,0 +1,25 @@
+---
+
+- name: "Create temporary directory"
+  ansible.builtin.tempfile:
+    state: directory
+    prefix: "session-manager-plugin-"
+  register: temp_dir
+
+- block:
+    - name: "Download latest version of session-manager-plugin"
+      ansible.builtin.get_url:
+        url: "{{ session_manager_plugin_pkg_url }}"
+        dest: "{{ temp_dir.path }}/session-manager-plugin.deb"
+        mode: "0644"
+
+    - name: "Install session-manager-plugin"
+      ansible.builtin.apt:
+        deb: "{{ temp_dir.path }}/session-manager-plugin.deb"
+
+  always:
+    - name: "Clean up temporary directory"
+      ansible.builtin.file:
+        path: "{{ temp_dir.path }}"
+        state: "absent"
+      when: temp_dir.path is defined

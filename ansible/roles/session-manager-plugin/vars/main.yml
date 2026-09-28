@@ -1,0 +1,9 @@
+---
+# vars file for session-manager-plugin
+base_arch:
+  x86_64: 'ubuntu_64bit'
+  amd64: 'ubuntu_64bit'
+  aarch64: 'ubuntu_arm64'
+
+# vars for session-manager-plugin
+session_manager_plugin_pkg_url: "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/{{ base_arch[ansible_architecture | lower] }}/session-manager-plugin.deb"
