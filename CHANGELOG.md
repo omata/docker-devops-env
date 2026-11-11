@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation: `AGENTS.md` "Commits" section with the propose-approve-commit procedure, the
   mandatory `CHANGELOG.md` entry under `[Unreleased]` and the Conventional Commits message
   format.
+- `CLAUDE.md` for Claude Code: imports `AGENTS.md` and documents the Packer/Ansible build
+  flow, role ordering, Docker-outside-of-Docker setup and worktree notes.
 
 ---
 
