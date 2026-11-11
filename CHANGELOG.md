@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- Documentation: `AGENTS.md` Git Flow rules now create all branches as worktrunk (`wt`)
+  worktrees under `.worktrees/` and merge them through GitHub Pull Requests instead of
+  `git flow ... finish`.
+
+---
+
 ## [2.0.1] - 2026-04-20
 
 ### Changed

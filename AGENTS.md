@@ -8,14 +8,20 @@
 
 ### Git Flow
 
-This repository uses **git flow** for branch management. All branching, merging, and release operations must be performed through `git flow` commands — never manually merge or create release/hotfix branches by hand.
+This repository uses the **git flow** branching model (branch names and prefixes: `feature/`, `bugfix/`, `release/`, `hotfix/`) combined with **git worktrees managed by [worktrunk](https://github.com/max-sixty/worktrunk) (`wt`)**. Never create or merge branches by hand with plain `git branch`/`git checkout -b`/`git merge`/`git worktree add`.
 
-- **Main branches**: `main` (production) and `develop` (integration).
-- **Feature branches**: created from `develop` with `git flow feature start <name>`, finished with `git flow feature finish <name>`.
-- **Release branches**: created from `develop` with `git flow release start <version>`, finished with `git flow release finish <version>` (merges into both `main` and `develop`, creates a tag).
-- **Hotfix branches**: created from `main` with `git flow hotfix start <version>`, finished with `git flow hotfix finish <version>`.
-- **Never push directly to `main` or `develop`**; always go through the appropriate git flow workflow.
-- When finishing a release or hotfix, git flow will open an editor for the merge commit and the tag message. Accept the defaults unless the user says otherwise.
+- **Main branches**: `main` (production) and `develop` (integration). They live in the main checkout (the repository root); do not do day-to-day work there.
+- **Worktree location**: `wt` is configured (user config, `~/.config/worktrunk/config.toml`) with `worktree-path = ".worktrees/{{ branch | sanitize }}"`, so every worktree is created under `.worktrees/` inside the project (e.g. `feature/foo` → `.worktrees/feature-foo`). Project hooks live in `.config/wt.toml`.
+- **Branch creation**: every branch is created with `wt`, which creates the branch and its worktree together. Never use `git flow <type> start`, `git checkout -b` or `git worktree add`.
+  - Feature / bugfix (based on `develop`): `wt switch --create feature/<name> --base develop` (or `bugfix/<name>`).
+  - Release (based on `develop`): `wt switch --create release/<version> --base develop`.
+  - Hotfix (based on `main`): `wt switch --create hotfix/<version> --base main`.
+- **Merging**: branches are merged through **Pull Requests on GitHub**, never locally (no `wt merge`, no `git flow <type> finish`, no manual `git merge`). Push the branch and open the PR against `develop` (feature, bugfix, release) or `main` (release, hotfix).
+- **After the PR is merged**: remove the worktree with `wt remove` (the branch is deleted only if already merged).
+- **Other worktree commands**: `wt list` (status of all worktrees), `wt switch <branch>` (move to an existing one).
+- **Each worktree has its own `.venv`**: run `uv sync` in a new worktree before using Packer/Ansible/ruff (the `deps` hook in `.config/wt.toml` is currently commented out).
+- **Never run `git worktree prune` inside the container**: the `pre-start` hook rewrites each worktree's `.git` file to a relative path, but the registration in `.git/worktrees/` stays absolute.
+- **Never push directly to `main` or `develop`**; they only change through merged Pull Requests.
 
 ---
 
