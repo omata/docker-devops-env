@@ -8,14 +8,63 @@
 
 ### Git Flow
 
-This repository uses **git flow** for branch management. All branching, merging, and release operations must be performed through `git flow` commands — never manually merge or create release/hotfix branches by hand.
+This repository uses the **git flow** branching model (branch names and prefixes: `feature/`, `bugfix/`, `release/`, `hotfix/`) combined with **git worktrees managed by [worktrunk](https://github.com/max-sixty/worktrunk) (`wt`)**. Never create or merge branches by hand with plain `git branch`/`git checkout -b`/`git merge`/`git worktree add`.
 
-- **Main branches**: `main` (production) and `develop` (integration).
-- **Feature branches**: created from `develop` with `git flow feature start <name>`, finished with `git flow feature finish <name>`.
-- **Release branches**: created from `develop` with `git flow release start <version>`, finished with `git flow release finish <version>` (merges into both `main` and `develop`, creates a tag).
-- **Hotfix branches**: created from `main` with `git flow hotfix start <version>`, finished with `git flow hotfix finish <version>`.
-- **Never push directly to `main` or `develop`**; always go through the appropriate git flow workflow.
-- When finishing a release or hotfix, git flow will open an editor for the merge commit and the tag message. Accept the defaults unless the user says otherwise.
+- **Main branches**: `main` (production) and `develop` (integration). They live in the main checkout (the repository root); do not do day-to-day work there.
+- **Worktree location**: `wt` is configured (user config, `~/.config/worktrunk/config.toml`) with `worktree-path = ".worktrees/{{ branch | sanitize }}"`, so every worktree is created under `.worktrees/` inside the project (e.g. `feature/foo` → `.worktrees/feature-foo`). Project hooks live in `.config/wt.toml`.
+- **Branch creation**: every branch is created with `wt`, which creates the branch and its worktree together. Never use `git flow <type> start`, `git checkout -b` or `git worktree add`.
+  - Feature / bugfix (based on `develop`): `wt switch --create feature/<name> --base develop` (or `bugfix/<name>`).
+  - Release (based on `develop`): `wt switch --create release/<version> --base develop`.
+  - Hotfix (based on `main`): `wt switch --create hotfix/<version> --base main`.
+- **Merging**: branches are merged through **Pull Requests on GitHub**, never locally (no `wt merge`, no `git flow <type> finish`, no manual `git merge`). Push the branch and open the PR against `develop` (feature, bugfix, release) or `main` (release, hotfix).
+- **After the PR is merged**: remove the worktree with `wt remove` (the branch is deleted only if already merged).
+- **Other worktree commands**: `wt list` (status of all worktrees), `wt switch <branch>` (move to an existing one).
+- **Each worktree has its own `.venv`**: run `uv sync` in a new worktree before using Packer/Ansible/ruff (the `deps` hook in `.config/wt.toml` is currently commented out).
+- **Never run `git worktree prune` inside the container**: the `pre-start` hook rewrites each worktree's `.git` file to a relative path, but the registration in `.git/worktrees/` stays absolute.
+- **Never push directly to `main` or `develop`**; they only change through merged Pull Requests.
+
+### Commits
+
+Commits are only created when the user explicitly asks for one, and always follow this procedure:
+
+1. **Propose first, commit later.** Before running `git commit`, show the user the proposed commit **title and body** (see "Message format" below) together with the `CHANGELOG.md` line(s) that will go in the same commit.
+2. **Wait for explicit approval.** Stop and wait for the user's reply in that turn. Silence, the original request to commit, or an earlier approval of a different message does not count. If the user asks for changes, propose the new version and wait again.
+3. **Update `CHANGELOG.md` in the same commit.** Add one entry per change under `## [Unreleased]` at the top of the file (just below the first `---`; create the section if it is missing), inside the matching Keep a Changelog subsection: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`. Follow the style of existing entries (a `- ` bullet, in English, backticks for paths and commands). Do not edit released version sections; the `[Unreleased]` block is renamed to the version and date only when a release is cut.
+4. **Stage everything together.** Stage the changed files and `CHANGELOG.md`, then create a single commit using the approved message. If the approved message or changelog text must change afterwards, ask again.
+5. One commit per fix or feature; do not bundle unrelated changes.
+
+#### Message format
+
+Messages follow [Conventional Commits](https://www.conventionalcommits.org/), which maps directly onto [Semantic Versioning](https://semver.org/). Always in English.
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+- **Type** (decides the version bump when a release is cut):
+
+  | Type | Use for | SemVer | `CHANGELOG.md` section |
+  |---|---|---|---|
+  | `feat` | New capability (new role, tool, task, compose option) | MINOR | Added |
+  | `fix` | Bug fix in the image, roles, tasks or compose files | PATCH | Fixed |
+  | `perf` | Performance improvement without behaviour change | PATCH | Changed |
+  | `refactor` | Restructuring/renaming with no behaviour change | none | Changed |
+  | `docs` | Documentation only (`Readme.md`, `Léeme.md`, `AGENTS.md`, `CLAUDE.md`, comments) | none | Changed (or Added/Fixed if it adds/corrects docs) |
+  | `build` | Packer, Taskfile, `pyproject.toml`/`uv.lock` dependency changes | none | Changed |
+  | `chore` | Maintenance with no effect on the image or docs (`.gitignore`, tooling config) | none | Changed |
+  | `style` / `test` / `ci` | Formatting only / tests / CI | none | Changed |
+
+- **Breaking changes** (anything that forces users to change how they build or run the image, e.g. removed env vars, changed volume paths or entrypoint behaviour) are **MAJOR**: add `!` after the type/scope (`feat(docker-compose)!: ...`) and a `BREAKING CHANGE: <what breaks and how to migrate>` footer. In the changelog they go under `### Breaking changes`.
+- **Scope** is required and names the area touched, in lowercase: the role name (`ansible`, `terraform`, `docker-cli`, …; use `ansible` when touching several roles or the playbook), `docker-compose`, `packer`, `taskfile`, `entrypoint`, `agents` (`AGENTS.md`/`CLAUDE.md`), `readme` (`Readme.md`/`Léeme.md`), `changelog`, `deps`. Use a single scope; if a change needs two, it is probably two commits.
+- **Subject**: imperative mood ("add", "fix", "remove", not "added"/"adds"), lowercase first letter, no trailing period, at most 72 characters. Describe *what* changes, not how or why.
+- **Body** (required for `feat`, `fix` and breaking changes; optional for trivial `docs`/`chore`): separated from the subject by a blank line, wrapped at 72 characters, plain prose or `- ` bullets explaining *why* and any relevant side effects. No Markdown quote markers (`>`), headings or emphasis.
+- **Footer**: `BREAKING CHANGE: ...` when applicable, and issue/PR references (`Refs #12`, `Closes #12`) when they exist.
+- Good: `feat(ansible): add docker-cli role` · `fix(entrypoint): scope chown to avoid crossing bind mounts` · `docs(agents): add commit message conventions`
+- Bad: `Fix stuff`, `docs: update files` (no scope, vague), `feat(ansible): Added new roles.` (past tense, capital, period), `feat(ansible,docker-compose): ...` (two scopes).
 
 ---
 
