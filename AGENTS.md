@@ -23,6 +23,49 @@ This repository uses the **git flow** branching model (branch names and prefixes
 - **Never run `git worktree prune` inside the container**: the `pre-start` hook rewrites each worktree's `.git` file to a relative path, but the registration in `.git/worktrees/` stays absolute.
 - **Never push directly to `main` or `develop`**; they only change through merged Pull Requests.
 
+### Commits
+
+Commits are only created when the user explicitly asks for one, and always follow this procedure:
+
+1. **Propose first, commit later.** Before running `git commit`, show the user the proposed commit **title and body** (see "Message format" below) together with the `CHANGELOG.md` line(s) that will go in the same commit.
+2. **Wait for explicit approval.** Stop and wait for the user's reply in that turn. Silence, the original request to commit, or an earlier approval of a different message does not count. If the user asks for changes, propose the new version and wait again.
+3. **Update `CHANGELOG.md` in the same commit.** Add one entry per change under `## [Unreleased]` at the top of the file (just below the first `---`; create the section if it is missing), inside the matching Keep a Changelog subsection: `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` or `### Security`. Follow the style of existing entries (a `- ` bullet, in English, backticks for paths and commands). Do not edit released version sections; the `[Unreleased]` block is renamed to the version and date only when a release is cut.
+4. **Stage everything together.** Stage the changed files and `CHANGELOG.md`, then create a single commit using the approved message. If the approved message or changelog text must change afterwards, ask again.
+5. One commit per fix or feature; do not bundle unrelated changes.
+
+#### Message format
+
+Messages follow [Conventional Commits](https://www.conventionalcommits.org/), which maps directly onto [Semantic Versioning](https://semver.org/). Always in English.
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+- **Type** (decides the version bump when a release is cut):
+
+  | Type | Use for | SemVer | `CHANGELOG.md` section |
+  |---|---|---|---|
+  | `feat` | New capability (new role, tool, task, compose option) | MINOR | Added |
+  | `fix` | Bug fix in the image, roles, tasks or compose files | PATCH | Fixed |
+  | `perf` | Performance improvement without behaviour change | PATCH | Changed |
+  | `refactor` | Restructuring/renaming with no behaviour change | none | Changed |
+  | `docs` | Documentation only (`Readme.md`, `Léeme.md`, `AGENTS.md`, `CLAUDE.md`, comments) | none | Changed (or Added/Fixed if it adds/corrects docs) |
+  | `build` | Packer, Taskfile, `pyproject.toml`/`uv.lock` dependency changes | none | Changed |
+  | `chore` | Maintenance with no effect on the image or docs (`.gitignore`, tooling config) | none | Changed |
+  | `style` / `test` / `ci` | Formatting only / tests / CI | none | Changed |
+
+- **Breaking changes** (anything that forces users to change how they build or run the image, e.g. removed env vars, changed volume paths or entrypoint behaviour) are **MAJOR**: add `!` after the type/scope (`feat(docker-compose)!: ...`) and a `BREAKING CHANGE: <what breaks and how to migrate>` footer. In the changelog they go under `### Breaking changes`.
+- **Scope** is required and names the area touched, in lowercase: the role name (`ansible`, `terraform`, `docker-cli`, …; use `ansible` when touching several roles or the playbook), `docker-compose`, `packer`, `taskfile`, `entrypoint`, `agents` (`AGENTS.md`/`CLAUDE.md`), `readme` (`Readme.md`/`Léeme.md`), `changelog`, `deps`. Use a single scope; if a change needs two, it is probably two commits.
+- **Subject**: imperative mood ("add", "fix", "remove", not "added"/"adds"), lowercase first letter, no trailing period, at most 72 characters. Describe *what* changes, not how or why.
+- **Body** (required for `feat`, `fix` and breaking changes; optional for trivial `docs`/`chore`): separated from the subject by a blank line, wrapped at 72 characters, plain prose or `- ` bullets explaining *why* and any relevant side effects. No Markdown quote markers (`>`), headings or emphasis.
+- **Footer**: `BREAKING CHANGE: ...` when applicable, and issue/PR references (`Refs #12`, `Closes #12`) when they exist.
+- Good: `feat(ansible): add docker-cli role` · `fix(entrypoint): scope chown to avoid crossing bind mounts` · `docs(agents): add commit message conventions`
+- Bad: `Fix stuff`, `docs: update files` (no scope, vague), `feat(ansible): Added new roles.` (past tense, capital, period), `feat(ansible,docker-compose): ...` (two scopes).
+
 ---
 
 ## What this repo is

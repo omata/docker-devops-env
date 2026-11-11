@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   worktrees under `.worktrees/` and merge them through GitHub Pull Requests instead of
   `git flow ... finish`.
 
+### Added
+- Documentation: `AGENTS.md` "Commits" section with the propose-approve-commit procedure, the
+  mandatory `CHANGELOG.md` entry under `[Unreleased]` and the Conventional Commits message
+  format.
+
 ---
 
 ## [2.0.1] - 2026-04-20
